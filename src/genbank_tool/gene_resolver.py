@@ -38,7 +38,7 @@ class GeneResolver:
     RATE_LIMIT = 3  # requests per second for non-API key users
     UNIPROT_RATE_LIMIT = 10  # UniProt allows 10 requests per second
     CACHE_DIR = Path("cache/gene_resolution")
-    CONFIDENCE_THRESHOLD = 0.7  # Threshold for triggering UniProt fallback
+    CONFIDENCE_THRESHOLD = 0.8  # Threshold for triggering UniProt fallback (increased for better accuracy)
     
     def __init__(self, api_key: Optional[str] = None, cache_enabled: bool = True):
         """Initialize the gene resolver.
@@ -417,7 +417,7 @@ class GeneResolver:
         # First try NCBI
         ncbi_result = self._resolve_via_ncbi(gene_name)
         
-        # If NCBI gives high confidence result, use it
+        # If NCBI gives high confidence result, use it (threshold: 0.8)
         if ncbi_result and ncbi_result.confidence >= self.CONFIDENCE_THRESHOLD:
             logger.info(f"NCBI resolved {gene_name} -> {ncbi_result.official_symbol} with high confidence ({ncbi_result.confidence})")
             return ncbi_result

@@ -17,30 +17,10 @@ from Bio.SeqRecord import SeqRecord
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from .models import RetrievedSequence
+from .transcript_selector import TranscriptSelector, TranscriptSelection
+
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class RetrievedSequence:
-    """Represents a retrieved CDS sequence with metadata."""
-    
-    gene_symbol: str
-    gene_id: str
-    accession: str
-    version: str
-    description: str
-    genbank_url: str
-    cds_sequence: str
-    cds_length: int
-    protein_id: Optional[str] = None
-    transcript_variant: Optional[str] = None
-    refseq_select: bool = False
-    retrieval_timestamp: str = ""
-    
-    @property
-    def full_accession(self) -> str:
-        """Get full accession with version."""
-        return f"{self.accession}.{self.version}"
 
 
 class SequenceRetriever:
@@ -52,17 +32,19 @@ class SequenceRetriever:
     CACHE_DIR = Path("cache/sequences")
     
     def __init__(self, api_key: Optional[str] = None, email: Optional[str] = None, 
-                 cache_enabled: bool = True):
+                 cache_enabled: bool = True, enable_selection: bool = True):
         """Initialize the sequence retriever.
         
         Args:
             api_key: Optional NCBI API key for increased rate limits
             email: Email for NCBI Entrez (required by NCBI guidelines)
             cache_enabled: Whether to use local caching
+            enable_selection: Whether to enable transcript selection
         """
         self.api_key = api_key
         self.email = email or "user@example.com"
         self.cache_enabled = cache_enabled
+        self.enable_selection = enable_selection
         
         # Set up Biopython Entrez
         Entrez.email = self.email
@@ -85,6 +67,10 @@ class SequenceRetriever:
         # Rate limiting
         self.last_request_time = 0
         self.rate_limit = 10 if api_key else self.RATE_LIMIT
+        
+        # Initialize transcript selector if enabled
+        if self.enable_selection:
+            self.selector = TranscriptSelector(uniprot_enabled=True, prefer_longest=True)
     
     def _rate_limit(self) -> None:
         """Enforce rate limiting between requests."""
@@ -399,6 +385,52 @@ class SequenceRetriever:
         logger.info(f"Retrieved {len(sequences)} sequences for {gene_symbol}")
         
         return sequences
+    
+    def get_canonical_transcript(
+        self,
+        gene_symbol: str,
+        gene_id: str,
+        user_preference: Optional[str] = None
+    ) -> Optional[TranscriptSelection]:
+        """Retrieve and select the canonical transcript for a gene.
+        
+        Args:
+            gene_symbol: Official gene symbol
+            gene_id: NCBI Gene ID
+            user_preference: Optional user-specified accession
+            
+        Returns:
+            Selected canonical transcript or None
+        """
+        if not self.enable_selection:
+            raise RuntimeError("Transcript selection is not enabled")
+        
+        # Get all transcripts
+        transcripts = self.retrieve_by_gene_id(gene_symbol, gene_id)
+        
+        if not transcripts:
+            logger.warning(f"No transcripts found for {gene_symbol}")
+            return None
+        
+        # Select canonical
+        selection = self.selector.select_canonical(
+            transcripts,
+            gene_symbol,
+            gene_id,
+            user_preference
+        )
+        
+        if selection:
+            logger.info(
+                f"Selected {selection.transcript.full_accession} for {gene_symbol} "
+                f"using {selection.method.value} (confidence: {selection.confidence:.2f})"
+            )
+            
+            if selection.warnings:
+                for warning in selection.warnings:
+                    logger.warning(f"  {warning}")
+        
+        return selection
     
     def retrieve_by_accession(self, accession: str) -> Optional[RetrievedSequence]:
         """Retrieve a specific sequence by accession number.

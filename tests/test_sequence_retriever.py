@@ -10,7 +10,8 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 
-from genbank_tool.sequence_retriever import SequenceRetriever, RetrievedSequence
+from genbank_tool.models import RetrievedSequence
+from genbank_tool.sequence_retriever import SequenceRetriever
 
 
 class TestSequenceRetriever:
