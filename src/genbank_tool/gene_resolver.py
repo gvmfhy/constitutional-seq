@@ -40,15 +40,18 @@ class GeneResolver:
     CACHE_DIR = Path("cache/gene_resolution")
     CONFIDENCE_THRESHOLD = 0.8  # Threshold for triggering UniProt fallback (increased for better accuracy)
     
-    def __init__(self, api_key: Optional[str] = None, cache_enabled: bool = True):
+    def __init__(self, api_key: Optional[str] = None, cache_enabled: bool = True, 
+                 uniprot_first: bool = False):
         """Initialize the gene resolver.
         
         Args:
             api_key: Optional NCBI API key for increased rate limits
             cache_enabled: Whether to use local caching
+            uniprot_first: Whether to search UniProt before NCBI
         """
         self.api_key = api_key
         self.cache_enabled = cache_enabled
+        self.uniprot_first = uniprot_first
         
         if self.cache_enabled:
             self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -414,31 +417,66 @@ class GeneResolver:
         """
         logger.info(f"Resolving gene: {gene_name}")
         
-        # First try NCBI
-        ncbi_result = self._resolve_via_ncbi(gene_name)
-        
-        # If NCBI gives high confidence result, use it (threshold: 0.8)
-        if ncbi_result and ncbi_result.confidence >= self.CONFIDENCE_THRESHOLD:
-            logger.info(f"NCBI resolved {gene_name} -> {ncbi_result.official_symbol} with high confidence ({ncbi_result.confidence})")
-            return ncbi_result
-        
-        # Otherwise, try UniProt
-        logger.info(f"NCBI confidence too low ({ncbi_result.confidence if ncbi_result else 0}), trying UniProt")
-        uniprot_result = self._resolve_via_uniprot(gene_name)
-        
-        # If we have both results, merge them
-        if ncbi_result and uniprot_result:
-            # Prefer UniProt if it has higher confidence
-            if uniprot_result.confidence > ncbi_result.confidence:
-                logger.info(f"Using UniProt result: {uniprot_result.official_symbol}")
+        if self.uniprot_first:
+            # Try UniProt first
+            logger.info(f"Using UniProt-first strategy for {gene_name}")
+            uniprot_result = self._resolve_via_uniprot(gene_name)
+            
+            if uniprot_result and uniprot_result.confidence >= 0.8:
+                logger.info(f"UniProt resolved {gene_name} -> {uniprot_result.official_symbol} with high confidence ({uniprot_result.confidence})")
                 return uniprot_result
-            else:
-                # Keep NCBI but note the UniProt alternative
-                ncbi_result.disambiguation_reason = f"UniProt suggests {uniprot_result.official_symbol}"
+            
+            # Fall back to NCBI
+            logger.info(f"UniProt confidence too low ({uniprot_result.confidence if uniprot_result else 0}), trying NCBI")
+            ncbi_result = self._resolve_via_ncbi(gene_name)
+            
+            # Choose best result
+            if ncbi_result and uniprot_result:
+                if uniprot_result.confidence > ncbi_result.confidence:
+                    return uniprot_result
+                else:
+                    return ncbi_result
+            elif uniprot_result:
+                return uniprot_result
+            elif ncbi_result and ncbi_result.confidence >= 0.7:
+                logger.warning(f"Using low-confidence NCBI result for {gene_name}: {ncbi_result.official_symbol} (confidence: {ncbi_result.confidence})")
                 return ncbi_result
-        
-        # Return whichever result we have
-        return uniprot_result or ncbi_result
+            else:
+                logger.warning(f"No confident match found for gene: {gene_name}")
+                return None
+        else:
+            # Original logic: NCBI first
+            ncbi_result = self._resolve_via_ncbi(gene_name)
+            
+            # If NCBI gives high confidence result, use it (threshold: 0.8)
+            if ncbi_result and ncbi_result.confidence >= self.CONFIDENCE_THRESHOLD:
+                logger.info(f"NCBI resolved {gene_name} -> {ncbi_result.official_symbol} with high confidence ({ncbi_result.confidence})")
+                return ncbi_result
+            
+            # Otherwise, try UniProt
+            logger.info(f"NCBI confidence too low ({ncbi_result.confidence if ncbi_result else 0}), trying UniProt")
+            uniprot_result = self._resolve_via_uniprot(gene_name)
+            
+            # If we have both results, merge them
+            if ncbi_result and uniprot_result:
+                # Prefer UniProt if it has higher confidence
+                if uniprot_result.confidence > ncbi_result.confidence:
+                    logger.info(f"Using UniProt result: {uniprot_result.official_symbol}")
+                    return uniprot_result
+                else:
+                    # Keep NCBI but note the UniProt alternative
+                    ncbi_result.disambiguation_reason = f"UniProt suggests {uniprot_result.official_symbol}"
+                    return ncbi_result
+            
+            # Return whichever result we have, but only if confidence is acceptable
+            if uniprot_result:
+                return uniprot_result
+            elif ncbi_result and ncbi_result.confidence >= 0.7:  # Lower threshold for fallback
+                logger.warning(f"Using low-confidence NCBI result for {gene_name}: {ncbi_result.official_symbol} (confidence: {ncbi_result.confidence})")
+                return ncbi_result
+            else:
+                logger.warning(f"No confident match found for gene: {gene_name}")
+                return None
     
     def _resolve_via_ncbi(self, gene_name: str) -> Optional[ResolvedGene]:
         """Resolve gene name using NCBI Gene database.

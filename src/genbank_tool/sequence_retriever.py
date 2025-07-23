@@ -283,12 +283,48 @@ class SequenceRetriever:
         
         return None
     
-    def retrieve_by_gene_id(self, gene_symbol: str, gene_id: str) -> List[RetrievedSequence]:
+    def _get_gene_url(self, gene_id: str, resolved_gene=None) -> Optional[str]:
+        """Generate URL to gene page based on source."""
+        if resolved_gene and hasattr(resolved_gene, 'source') and resolved_gene.source == "UniProt":
+            # For UniProt-resolved genes, link to UniProt
+            return f"https://www.uniprot.org/uniprotkb?query=gene:{resolved_gene.official_symbol}+AND+organism_id:9606"
+        else:
+            # Default to NCBI Gene
+            return f"https://www.ncbi.nlm.nih.gov/gene/{gene_id}"
+    
+    def _extract_isoform_info(self, record) -> Optional[str]:
+        """Extract isoform information from GenBank record."""
+        # Look for isoform info in description
+        description = record.description.lower()
+        
+        # Pattern for isoform X1, X2, etc.
+        isoform_match = re.search(r'isoform\s+([X\d]+)', description, re.IGNORECASE)
+        if isoform_match:
+            return f"isoform {isoform_match.group(1)}"
+        
+        # Pattern for variant 1, 2, etc.
+        variant_match = re.search(r'variant\s+(\d+)', description, re.IGNORECASE)
+        if variant_match:
+            return f"variant {variant_match.group(1)}"
+        
+        # Check qualifiers for isoform info
+        for feature in record.features:
+            if feature.type == "CDS":
+                if 'note' in feature.qualifiers:
+                    for note in feature.qualifiers['note']:
+                        if 'isoform' in note.lower():
+                            return note
+        
+        return None
+    
+    def retrieve_by_gene_id(self, gene_symbol: str, gene_id: str, 
+                           resolved_gene=None) -> List[RetrievedSequence]:
         """Retrieve all CDS sequences for a gene.
         
         Args:
             gene_symbol: Official gene symbol
             gene_id: NCBI Gene ID
+            resolved_gene: Optional ResolvedGene object with full gene info
             
         Returns:
             List of retrieved sequences
@@ -301,6 +337,13 @@ class SequenceRetriever:
             # Convert cached data to RetrievedSequence objects
             sequences = []
             for seq_data in cached:
+                # Ensure new fields are populated if missing (for old cache entries)
+                if 'full_gene_name' not in seq_data:
+                    seq_data['full_gene_name'] = resolved_gene.description if resolved_gene and hasattr(resolved_gene, 'description') else None
+                if 'gene_url' not in seq_data:
+                    seq_data['gene_url'] = self._get_gene_url(gene_id, resolved_gene)
+                if 'isoform' not in seq_data:
+                    seq_data['isoform'] = None
                 sequences.append(RetrievedSequence(**seq_data))
             return sequences
         
@@ -351,7 +394,10 @@ class SequenceRetriever:
                 protein_id=main_cds.get('protein_id'),
                 transcript_variant=self._extract_transcript_variant(record),
                 refseq_select=self._is_refseq_select(record),
-                retrieval_timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
+                retrieval_timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
+                full_gene_name=resolved_gene.description if resolved_gene and hasattr(resolved_gene, 'description') else None,
+                gene_url=self._get_gene_url(gene_id, resolved_gene),
+                isoform=self._extract_isoform_info(record)
             )
             
             sequences.append(seq)
@@ -376,7 +422,10 @@ class SequenceRetriever:
                     'protein_id': s.protein_id,
                     'transcript_variant': s.transcript_variant,
                     'refseq_select': s.refseq_select,
-                    'retrieval_timestamp': s.retrieval_timestamp
+                    'retrieval_timestamp': s.retrieval_timestamp,
+                    'full_gene_name': s.full_gene_name,
+                    'gene_url': s.gene_url,
+                    'isoform': s.isoform
                 }
                 for s in sequences
             ]
@@ -390,7 +439,8 @@ class SequenceRetriever:
         self,
         gene_symbol: str,
         gene_id: str,
-        user_preference: Optional[str] = None
+        user_preference: Optional[str] = None,
+        resolved_gene=None
     ) -> Optional[TranscriptSelection]:
         """Retrieve and select the canonical transcript for a gene.
         
@@ -406,7 +456,7 @@ class SequenceRetriever:
             raise RuntimeError("Transcript selection is not enabled")
         
         # Get all transcripts
-        transcripts = self.retrieve_by_gene_id(gene_symbol, gene_id)
+        transcripts = self.retrieve_by_gene_id(gene_symbol, gene_id, resolved_gene)
         
         if not transcripts:
             logger.warning(f"No transcripts found for {gene_symbol}")
@@ -493,7 +543,10 @@ class SequenceRetriever:
             protein_id=main_cds.get('protein_id'),
             transcript_variant=self._extract_transcript_variant(record),
             refseq_select=self._is_refseq_select(record),
-            retrieval_timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
+            retrieval_timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
+            full_gene_name=None,  # TODO: Get from resolved gene
+            gene_url=None,  # TODO: Get from resolved gene
+            isoform=self._extract_isoform_info(record)
         )
         
         return seq

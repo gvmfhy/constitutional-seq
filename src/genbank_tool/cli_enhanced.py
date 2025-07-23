@@ -42,7 +42,8 @@ def process_gene(gene_name: str, resolver, retriever, validator, cfg, prefer_tra
             selection = retriever.get_canonical_transcript(
                 resolved.official_symbol,
                 resolved.gene_id,
-                user_preference=prefer_transcript
+                user_preference=prefer_transcript,
+                resolved_gene=resolved
             )
             
             if not selection:
@@ -53,7 +54,7 @@ def process_gene(gene_name: str, resolver, retriever, validator, cfg, prefer_tra
             
             best_seq = selection.transcript
         else:
-            sequences = retriever.retrieve_by_gene_id(resolved.official_symbol, resolved.gene_id)
+            sequences = retriever.retrieve_by_gene_id(resolved.official_symbol, resolved.gene_id, resolved)
             
             if not sequences:
                 return {

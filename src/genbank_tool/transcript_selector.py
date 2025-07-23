@@ -131,9 +131,44 @@ class TranscriptSelector:
                     alternatives_count=len(transcripts) - 1
                 )
         
-        # 4. Select longest CDS
+        # 4. Select longest CDS (with preference for ATG start)
         if self.prefer_longest:
-            longest = self._find_longest_cds(transcripts)
+            longest_overall = self._find_longest_cds(transcripts)
+            longest_atg = self._find_longest_atg_cds(transcripts)
+            
+            # If we have both, decide which to use
+            if longest_overall and longest_atg:
+                # Check if the longest overall starts with ATG
+                if self._has_standard_start_codon(longest_overall):
+                    # Longest is also ATG-starting, use it
+                    longest = longest_overall
+                else:
+                    # Longest starts with non-ATG, add warning and prefer ATG version
+                    start_codon = longest_overall.cds_sequence[:3].upper()
+                    warnings.append(f"Longest CDS starts with {start_codon} (non-standard); selected ATG-starting alternative")
+                    longest = longest_atg
+                    
+                    return TranscriptSelection(
+                        transcript=longest,
+                        method=SelectionMethod.LONGEST_CDS,
+                        confidence=0.75,  # Slightly lower confidence due to alternative choice
+                        rationale=f"Longest ATG-starting CDS ({longest.cds_length} bp), avoiding {start_codon} start",
+                        warnings=warnings,
+                        alternatives_count=len(transcripts) - 1
+                    )
+            elif longest_overall:
+                # Only non-ATG longest available
+                if not self._has_standard_start_codon(longest_overall):
+                    start_codon = longest_overall.cds_sequence[:3].upper()
+                    warnings.append(f"Selected transcript starts with {start_codon} instead of ATG")
+                longest = longest_overall
+            elif longest_atg:
+                # Only ATG version available
+                longest = longest_atg
+            else:
+                # No transcripts found
+                longest = None
+            
             if longest:
                 # Check if multiple transcripts have same length
                 same_length = [t for t in transcripts if t.cds_length == longest.cds_length]
@@ -294,6 +329,23 @@ class TranscriptSelector:
         )
         
         return sorted_transcripts[0]
+    
+    def _has_standard_start_codon(self, transcript: RetrievedSequence) -> bool:
+        """Check if transcript starts with standard ATG codon."""
+        if not transcript.cds_sequence:
+            return False
+        return transcript.cds_sequence.upper().startswith('ATG')
+    
+    def _find_longest_atg_cds(
+        self,
+        transcripts: List[RetrievedSequence]
+    ) -> Optional[RetrievedSequence]:
+        """Find transcript with longest CDS that starts with ATG."""
+        atg_transcripts = [t for t in transcripts if self._has_standard_start_codon(t)]
+        if not atg_transcripts:
+            return None
+        
+        return max(atg_transcripts, key=lambda t: t.cds_length)
     
     def generate_selection_report(
         self,

@@ -20,6 +20,9 @@ class RetrievedSequence:
     transcript_variant: Optional[str] = None
     refseq_select: bool = False
     retrieval_timestamp: str = ""
+    full_gene_name: Optional[str] = None  # Full descriptive name from UniProt/NCBI
+    gene_url: Optional[str] = None  # URL to gene page (NCBI Gene or UniProt)
+    isoform: Optional[str] = None  # Isoform identifier if applicable
     
     @property
     def full_accession(self) -> str:

@@ -25,9 +25,12 @@ class OutputFormatter:
     COLUMNS = [
         "Input Name",
         "Official Symbol", 
+        "Full Gene Name",
         "Gene ID",
+        "Gene URL",
         "RefSeq Accession",
         "GenBank URL",
+        "Isoform",
         "CDS Length",
         "CDS Sequence",
         "Selection Method",
@@ -107,9 +110,12 @@ class OutputFormatter:
         result = {
             'Input Name': input_name,
             'Official Symbol': '',
+            'Full Gene Name': '',
             'Gene ID': '',
+            'Gene URL': '',
             'RefSeq Accession': '',
             'GenBank URL': '',
+            'Isoform': '',
             'CDS Length': '',
             'CDS Sequence': '',
             'Selection Method': '',
@@ -124,9 +130,12 @@ class OutputFormatter:
         if sequence:
             result.update({
                 'Official Symbol': sequence.gene_symbol,
+                'Full Gene Name': sequence.full_gene_name or '',
                 'Gene ID': sequence.gene_id,
+                'Gene URL': sequence.gene_url or '',
                 'RefSeq Accession': f"{sequence.accession}.{sequence.version}",
                 'GenBank URL': sequence.genbank_url,
+                'Isoform': sequence.isoform or '',
                 'CDS Length': str(sequence.cds_length),
                 'CDS Sequence': sequence.cds_sequence
             })

@@ -6,9 +6,15 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
+try:
+    import markdown
+    MARKDOWN_AVAILABLE = True
+except ImportError:
+    MARKDOWN_AVAILABLE = False
+
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTableWidget, QTableWidgetItem, QPushButton, QTextEdit,
+    QTableWidget, QTableWidgetItem, QPushButton, QTextEdit, QTextBrowser,
     QLabel, QProgressBar, QFileDialog, QMessageBox,
     QSplitter, QGroupBox, QTabWidget, QToolBar,
     QAction, QMenuBar, QMenu, QStatusBar, QHeaderView,
@@ -45,7 +51,8 @@ class ProcessingThread(QThread):
         # Initialize components
         self.resolver = GeneResolver(
             api_key=config.get('ncbi_api_key'),
-            cache_enabled=config.get('use_cache', True)
+            cache_enabled=config.get('use_cache', True),
+            uniprot_first=config.get('uniprot_first', False)
         )
         self.retriever = SequenceRetriever(
             api_key=config.get('ncbi_api_key'),
@@ -53,7 +60,7 @@ class ProcessingThread(QThread):
             cache_enabled=config.get('use_cache', True)
         )
         self.selector = TranscriptSelector()
-        self.validator = DataValidator() if config.get('validate', False) else None
+        self.validator = DataValidator()  # Always validate by default
         self.error_handler = get_error_handler()
     
     def cancel(self):
@@ -81,7 +88,8 @@ class ProcessingThread(QThread):
                 selection = self.retriever.get_canonical_transcript(
                     resolved.official_symbol,
                     resolved.gene_id,
-                    user_preference=self.config.get('prefer_transcript')
+                    user_preference=self.config.get('prefer_transcript'),
+                    resolved_gene=resolved
                 )
                 
                 if not selection:
@@ -99,8 +107,11 @@ class ProcessingThread(QThread):
                 result = {
                     'input_name': gene_name,
                     'official_symbol': resolved.official_symbol,
+                    'full_gene_name': selection.transcript.full_gene_name or resolved.description,
                     'gene_id': resolved.gene_id,
+                    'gene_url': selection.transcript.gene_url,
                     'accession': selection.transcript.accession,
+                    'isoform': selection.transcript.isoform,
                     'version': selection.transcript.version,
                     'length': len(selection.transcript.cds_sequence),
                     'sequence': selection.transcript.cds_sequence,
@@ -142,7 +153,7 @@ class GenBankToolGUI(QMainWindow):
     
     def init_ui(self):
         """Initialize the user interface."""
-        self.setWindowTitle("NCBI GenBank CDS Retrieval Tool")
+        self.setWindowTitle("GenBank CDS Retrieval Tool")
         self.setGeometry(100, 100, 1200, 800)
         
         # Create central widget
@@ -252,23 +263,14 @@ class GenBankToolGUI(QMainWindow):
         
         toolbar.addSeparator()
         
-        # Quick settings
-        self.canonical_checkbox = QCheckBox('Canonical Only')
-        self.canonical_checkbox.setChecked(True)
-        toolbar.addWidget(self.canonical_checkbox)
-        
-        self.validate_checkbox = QCheckBox('Validate')
-        toolbar.addWidget(self.validate_checkbox)
-        
-        toolbar.addSeparator()
-        
-        # Workers spinbox
-        toolbar.addWidget(QLabel('Workers:'))
-        self.workers_spinbox = QSpinBox()
-        self.workers_spinbox.setMinimum(1)
-        self.workers_spinbox.setMaximum(10)
-        self.workers_spinbox.setValue(5)
-        toolbar.addWidget(self.workers_spinbox)
+        # UniProt-first checkbox - keeping this as it's a useful option
+        self.uniprot_first_checkbox = QCheckBox('UniProt First')
+        self.uniprot_first_checkbox.setToolTip(
+            'Search UniProt database first for gene resolution.\n'
+            'UniProt often has better gene name recognition\n'
+            'and more comprehensive protein information.'
+        )
+        toolbar.addWidget(self.uniprot_first_checkbox)
     
     def create_input_panel(self) -> QWidget:
         """Create the input panel."""
@@ -321,15 +323,23 @@ class GenBankToolGUI(QMainWindow):
         self.results_tabs.addTab(self.results_table, "Results Table")
         
         # Sequence viewer
-        self.sequence_viewer = QTextEdit()
+        self.sequence_viewer = QTextBrowser()
         self.sequence_viewer.setReadOnly(True)
         self.sequence_viewer.setFont(QFont("Courier", 10))
+        self.sequence_viewer.setOpenExternalLinks(True)
         self.results_tabs.addTab(self.sequence_viewer, "Sequence Viewer")
         
         # Error log
         self.error_log = QTextEdit()
         self.error_log.setReadOnly(True)
         self.results_tabs.addTab(self.error_log, "Errors")
+        
+        # Help/Instructions tab
+        self.help_text = QTextBrowser()
+        self.help_text.setReadOnly(True)
+        self.help_text.setOpenExternalLinks(True)
+        self.setup_help_content()
+        self.results_tabs.addTab(self.help_text, "Help")
         
         layout.addWidget(self.results_tabs)
         
@@ -355,9 +365,9 @@ class GenBankToolGUI(QMainWindow):
     def setup_results_table(self):
         """Setup the results table columns."""
         headers = [
-            'Input Name', 'Official Symbol', 'Gene ID', 
-            'Accession', 'Version', 'Length', 
-            'Selection Method', 'Confidence', 'Status'
+            'Input Name', 'Official Symbol', 'Full Gene Name',
+            'Gene ID', 'Gene URL', 'Accession', 'Isoform', 'Version', 
+            'Length', 'Selection Method', 'Confidence', 'Status'
         ]
         
         self.results_table.setColumnCount(len(headers))
@@ -365,6 +375,193 @@ class GenBankToolGUI(QMainWindow):
         self.results_table.horizontalHeader().setStretchLastSection(True)
         self.results_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.results_table.itemSelectionChanged.connect(self.on_result_selected)
+    
+    def setup_help_content(self):
+        """Setup help content by loading from markdown file."""
+        help_file = Path(__file__).parent / "help_content.md"
+        
+        try:
+            with open(help_file, 'r', encoding='utf-8') as f:
+                markdown_content = f.read()
+            
+            # Convert markdown to HTML
+            if MARKDOWN_AVAILABLE:
+                html_content = markdown.markdown(
+                    markdown_content, 
+                    extensions=['tables', 'fenced_code', 'toc']
+                )
+            else:
+                # Simple fallback conversion for basic markdown
+                html_content = self._simple_markdown_to_html(markdown_content)
+            
+            # Add CSS styling
+            styled_html = f"""
+            <html>
+            <head>
+                <style>
+                    body {{ 
+                        font-family: Arial, sans-serif; 
+                        margin: 20px; 
+                        line-height: 1.6; 
+                        color: #333;
+                    }}
+                    h1 {{ 
+                        color: #2c3e50; 
+                        border-bottom: 3px solid #3498db; 
+                        padding-bottom: 10px; 
+                    }}
+                    h2 {{ 
+                        color: #2c3e50; 
+                        border-bottom: 2px solid #3498db; 
+                        padding-bottom: 5px; 
+                        margin-top: 30px;
+                    }}
+                    h3 {{ 
+                        color: #34495e; 
+                        margin-top: 25px; 
+                        margin-bottom: 10px; 
+                    }}
+                    h4 {{ 
+                        color: #5d6d7e; 
+                        margin-top: 15px; 
+                    }}
+                    table {{ 
+                        border-collapse: collapse; 
+                        width: 100%; 
+                        margin: 15px 0; 
+                    }}
+                    th, td {{ 
+                        border: 1px solid #ddd; 
+                        padding: 8px; 
+                        text-align: left; 
+                    }}
+                    th {{ 
+                        background-color: #f2f2f2; 
+                        font-weight: bold;
+                    }}
+                    blockquote {{
+                        margin: 15px 0;
+                        padding: 12px;
+                        background-color: #ecf0f1;
+                        border-left: 4px solid #3498db;
+                        font-style: italic;
+                    }}
+                    code {{
+                        background-color: #f8f9fa;
+                        padding: 2px 4px;
+                        border-radius: 3px;
+                        font-family: 'Courier New', monospace;
+                    }}
+                    pre {{
+                        background-color: #f8f9fa;
+                        padding: 10px;
+                        border: 1px solid #dee2e6;
+                        border-radius: 4px;
+                        font-family: 'Courier New', monospace;
+                        overflow-x: auto;
+                    }}
+                    ul, ol {{ 
+                        padding-left: 20px; 
+                    }}
+                    li {{ 
+                        margin-bottom: 6px; 
+                    }}
+                    strong {{
+                        color: #2c3e50;
+                    }}
+                    em {{
+                        color: #7f8c8d;
+                    }}
+                </style>
+            </head>
+            <body>
+                {html_content}
+            </body>
+            </html>
+            """
+            
+            self.help_text.setHtml(styled_html)
+            
+        except FileNotFoundError:
+            # Fallback content if markdown file is missing
+            fallback_html = """
+            <html><body>
+            <h2>Help Content Not Found</h2>
+            <p>The help content file (help_content.md) could not be loaded.</p>
+            <p>Please ensure the file exists in the GUI directory.</p>
+            </body></html>
+            """
+            self.help_text.setHtml(fallback_html)
+            
+        except Exception as e:
+            # Error handling for other issues
+            error_html = f"""
+            <html><body>
+            <h2>Error Loading Help Content</h2>
+            <p>An error occurred while loading the help content:</p>
+            <p><code>{str(e)}</code></p>
+            </body></html>
+            """
+            self.help_text.setHtml(error_html)
+    
+    def _simple_markdown_to_html(self, markdown_text: str) -> str:
+        """Simple markdown to HTML conversion for basic formatting."""
+        import re
+        
+        html = markdown_text
+        
+        # Headers
+        html = re.sub(r'^# (.*?)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
+        html = re.sub(r'^## (.*?)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
+        html = re.sub(r'^### (.*?)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+        html = re.sub(r'^#### (.*?)$', r'<h4>\1</h4>', html, flags=re.MULTILINE)
+        
+        # Bold and italic
+        html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html)
+        html = re.sub(r'\*(.*?)\*', r'<em>\1</em>', html, flags=re.MULTILINE)
+        
+        # Code blocks
+        html = re.sub(r'`(.*?)`', r'<code>\1</code>', html)
+        
+        # Simple table conversion (basic)
+        lines = html.split('\n')
+        in_table = False
+        table_html = []
+        
+        for line in lines:
+            if '|' in line and line.strip().startswith('|'):
+                if not in_table:
+                    table_html.append('<table>')
+                    in_table = True
+                
+                cells = [cell.strip() for cell in line.split('|')[1:-1]]
+                if all(cell.strip('-') == '' for cell in cells):
+                    # Header separator line
+                    continue
+                
+                if not any('<tr>' in h for h in table_html[-3:]):
+                    # First row is header
+                    row = '<tr>' + ''.join(f'<th>{cell}</th>' for cell in cells) + '</tr>'
+                else:
+                    row = '<tr>' + ''.join(f'<td>{cell}</td>' for cell in cells) + '</tr>'
+                table_html.append(row)
+            else:
+                if in_table:
+                    table_html.append('</table>')
+                    in_table = False
+                table_html.append(line)
+        
+        if in_table:
+            table_html.append('</table>')
+        
+        html = '\n'.join(table_html)
+        
+        # Convert newlines to paragraphs
+        html = re.sub(r'\n\n+', '</p><p>', html)
+        html = f'<p>{html}</p>'
+        html = html.replace('<p></p>', '')
+        
+        return html
     
     def create_status_panel(self) -> QWidget:
         """Create the status panel."""
@@ -438,9 +635,10 @@ class GenBankToolGUI(QMainWindow):
             'ncbi_api_key': self.settings.value('ncbi_api_key', ''),
             'email': self.settings.value('email', 'user@example.com'),
             'use_cache': self.settings.value('use_cache', True),
-            'canonical_only': self.canonical_checkbox.isChecked(),
-            'validate': self.validate_checkbox.isChecked(),
-            'workers': self.workers_spinbox.value()
+            'canonical_only': True,  # Now always true by default
+            'validate': True,  # Now always true by default
+            'uniprot_first': self.uniprot_first_checkbox.isChecked(),
+            'workers': 5  # Fixed value for simplicity
         }
         
         # Create and start processing thread
@@ -482,13 +680,16 @@ class GenBankToolGUI(QMainWindow):
         # Populate columns
         self.results_table.setItem(row, 0, QTableWidgetItem(result['input_name']))
         self.results_table.setItem(row, 1, QTableWidgetItem(result['official_symbol']))
-        self.results_table.setItem(row, 2, QTableWidgetItem(result['gene_id']))
-        self.results_table.setItem(row, 3, QTableWidgetItem(result['accession']))
-        self.results_table.setItem(row, 4, QTableWidgetItem(str(result['version'])))
-        self.results_table.setItem(row, 5, QTableWidgetItem(str(result['length'])))
-        self.results_table.setItem(row, 6, QTableWidgetItem(result['selection_method']))
-        self.results_table.setItem(row, 7, QTableWidgetItem(f"{result['confidence']:.2f}"))
-        self.results_table.setItem(row, 8, QTableWidgetItem("✓ Success"))
+        self.results_table.setItem(row, 2, QTableWidgetItem(result.get('full_gene_name', '')))
+        self.results_table.setItem(row, 3, QTableWidgetItem(result['gene_id']))
+        self.results_table.setItem(row, 4, QTableWidgetItem(result.get('gene_url', '')))
+        self.results_table.setItem(row, 5, QTableWidgetItem(result['accession']))
+        self.results_table.setItem(row, 6, QTableWidgetItem(result.get('isoform', '')))
+        self.results_table.setItem(row, 7, QTableWidgetItem(str(result['version'])))
+        self.results_table.setItem(row, 8, QTableWidgetItem(str(result['length'])))
+        self.results_table.setItem(row, 9, QTableWidgetItem(result['selection_method']))
+        self.results_table.setItem(row, 10, QTableWidgetItem(f"{result['confidence']:.2f}"))
+        self.results_table.setItem(row, 11, QTableWidgetItem("✓ Success"))
         
         # Color code success
         for col in range(self.results_table.columnCount()):
@@ -505,7 +706,7 @@ class GenBankToolGUI(QMainWindow):
         self.results_table.insertRow(row)
         
         self.results_table.setItem(row, 0, QTableWidgetItem(gene_name))
-        self.results_table.setItem(row, 8, QTableWidgetItem(f"✗ {error_message}"))
+        self.results_table.setItem(row, 11, QTableWidgetItem(f"✗ {error_message}"))
         
         # Color code error
         for col in range(self.results_table.columnCount()):
@@ -546,18 +747,30 @@ class GenBankToolGUI(QMainWindow):
         if row < len(self.results):
             result = self.results[row]
             
-            # Display sequence
+            # Display sequence with enhanced info
             sequence = result['sequence']
             formatted = '\n'.join([sequence[i:i+60] for i in range(0, len(sequence), 60)])
             
             info = f">{result['accession']}.{result['version']} {result['official_symbol']}\n"
+            info += f"Full Name: {result.get('full_gene_name', 'N/A')}\n"
+            info += f"Gene ID: {result['gene_id']}\n"
+            
+            # Make URLs clickable using HTML
+            if result.get('gene_url'):
+                info += f"Gene URL: <a href='{result['gene_url']}'>{result['gene_url']}</a>\n"
+            if result.get('url'):
+                info += f"GenBank URL: <a href='{result['url']}'>{result['url']}</a>\n"
+            
+            if result.get('isoform'):
+                info += f"Isoform: {result['isoform']}\n"
             info += f"Length: {len(sequence)} bp\n"
             info += f"Selection: {result['selection_method']} (confidence: {result['confidence']:.2f})\n"
             if result.get('warnings'):
                 info += f"Warnings: {', '.join(result['warnings'])}\n"
             info += f"\n{formatted}"
             
-            self.sequence_viewer.setText(info)
+            # Use setHtml for clickable links
+            self.sequence_viewer.setHtml(f"<pre>{info}</pre>")
     
     def save_results(self):
         """Save results to file."""
@@ -634,10 +847,15 @@ class GenBankToolGUI(QMainWindow):
         QMessageBox.about(
             self,
             "About GenBank Tool",
-            "NCBI GenBank CDS Retrieval Tool\n\n"
+            "GenBank CDS Retrieval Tool\n\n"
             "Version 1.0.0\n\n"
-            "A tool for automated retrieval of coding sequences\n"
+            "Automated retrieval of validated canonical CDS sequences\n"
             "from NCBI GenBank for mRNA therapeutic development.\n\n"
+            "Features:\n"
+            "• Automatic canonical transcript selection\n"
+            "• Built-in sequence validation\n"
+            "• Full gene name and database links\n"
+            "• Optional UniProt-first search\n\n"
             "© 2024 - Created with PyQt5"
         )
     
@@ -649,14 +867,8 @@ class GenBankToolGUI(QMainWindow):
             self.restoreGeometry(geometry)
         
         # Other settings
-        self.canonical_checkbox.setChecked(
-            self.settings.value('canonical_only', True, type=bool)
-        )
-        self.validate_checkbox.setChecked(
-            self.settings.value('validate', False, type=bool)
-        )
-        self.workers_spinbox.setValue(
-            self.settings.value('workers', 5, type=int)
+        self.uniprot_first_checkbox.setChecked(
+            self.settings.value('uniprot_first', False, type=bool)
         )
     
     def closeEvent(self, event):
@@ -668,9 +880,7 @@ class GenBankToolGUI(QMainWindow):
         
         # Save settings
         self.settings.setValue('geometry', self.saveGeometry())
-        self.settings.setValue('canonical_only', self.canonical_checkbox.isChecked())
-        self.settings.setValue('validate', self.validate_checkbox.isChecked())
-        self.settings.setValue('workers', self.workers_spinbox.value())
+        self.settings.setValue('uniprot_first', self.uniprot_first_checkbox.isChecked())
         
         event.accept()
 
