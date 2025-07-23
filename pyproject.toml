@@ -28,6 +28,7 @@ dependencies = [
     "click>=8.1.0",
     "openpyxl>=3.1.0",
     "biopython>=1.81",
+    "PyQt5>=5.15.0",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +48,7 @@ build = [
 genbank-tool = "genbank_tool.cli_with_error_handling:main"
 genbank-tool-legacy = "genbank_tool.cli:main"
 genbank-tool-enhanced = "genbank_tool.cli_enhanced:main"
+genbank-tool-gui = "genbank_tool.gui_app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
