@@ -61,7 +61,7 @@
         "dependencies": [
           19
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -74,7 +74,7 @@
         "dependencies": [
           20
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -87,7 +87,7 @@
         "dependencies": [
           21
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -100,7 +100,7 @@
         "dependencies": [
           22
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -113,7 +113,7 @@
         "dependencies": [
           23
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -148,7 +148,7 @@
         "description": "Reverse the current gene resolution logic to use UniProt as the primary source and NCBI Gene as fallback, ensuring backward compatibility and handling all edge cases while maintaining performance.",
         "details": "Refactor the existing GeneResolver class to implement UniProt-first resolution strategy:\n\n1. **Reverse Resolution Order**: Modify the resolve() method to query UniProt REST API first, falling back to NCBI Gene only when UniProt returns no results or low confidence scores (<0.7).\n\n2. **Confidence Scoring Adjustments**: Update the confidence scoring algorithm to favor UniProt results. Implement weighted scoring: UniProt direct hits (1.0), UniProt partial matches (0.8-0.9), NCBI fallback results (-0.1 penalty), combined results (average with UniProt weight 0.7, NCBI weight 0.3).\n\n3. **Handle Missing Gene IDs**: Implement logic for cases where UniProt lacks NCBI Gene ID cross-references. Create a mapping service that attempts to resolve Gene IDs through: a) UniProt's dbxref fields, b) Gene symbol matching in NCBI, c) Alias resolution through both databases.\n\n4. **Backward Compatibility**: Maintain existing API interface with optional 'primary_source' parameter defaulting to 'uniprot'. Add migration helper that logs when results differ between old (NCBI-first) and new (UniProt-first) strategies. Implement feature flag GENE_RESOLVER_LEGACY_MODE for gradual rollout.\n\n5. **Caching Strategy Updates**: Modify cache keys to include source priority information. Implement separate cache namespaces for NCBI-first and UniProt-first results. Add cache migration utility to preserve existing cached data while allowing new resolution strategy.\n\n6. **Rate Limiting Coordination**: Implement intelligent rate limiting that coordinates between both APIs. Use token bucket algorithm with separate buckets for UniProt (100 req/min) and NCBI (3 req/sec). Add adaptive backoff when approaching limits, prioritizing primary source quota.\n\n7. **Error Handling Enhancement**: Update error handling to gracefully degrade from UniProt to NCBI on API failures. Implement circuit breaker pattern with configurable failure thresholds. Add detailed logging for source switching decisions.\n\n8. **Performance Optimization**: Implement parallel querying option for time-critical operations (query both sources simultaneously, use first valid response). Add response time monitoring for both sources to inform future optimizations.",
         "testStrategy": "Comprehensive testing strategy covering all refactoring aspects:\n\n1. **Unit Tests Updates**: Modify existing tests to verify UniProt-first behavior. Add tests for: confidence score calculations with new weights, fallback triggering conditions, edge cases where UniProt lacks Gene IDs.\n\n2. **Integration Tests**: Test actual API calls to both UniProt and NCBI in correct order. Verify rate limiting coordination doesn't cause conflicts. Test circuit breaker behavior with simulated API failures.\n\n3. **Backward Compatibility Tests**: Create test suite comparing results between legacy (NCBI-first) and new (UniProt-first) modes. Test with known problematic genes (PAX6, VEGF, TP53). Verify migration helpers correctly identify result differences.\n\n4. **Performance Tests**: Benchmark resolution times for common genes using both strategies. Test parallel querying performance vs sequential. Verify memory usage remains within limits during batch operations.\n\n5. **Cache Tests**: Verify cache isolation between resolution strategies. Test cache migration utility with production-like data. Ensure cache hit rates remain high after refactoring.\n\n6. **Rate Limiting Tests**: Simulate high-load scenarios approaching rate limits. Verify coordinated rate limiting prevents API bans. Test adaptive backoff behavior.\n\n7. **Regression Tests**: Run full test suite from Task 26 to ensure no functionality is lost. Add new test cases for genes that resolve differently between sources. Monitor test coverage to maintain >85%.",
-        "status": "pending",
+        "status": "cancelled",
         "dependencies": [
           26,
           23
@@ -159,7 +159,7 @@
     ],
     "metadata": {
       "created": "2025-07-22T19:25:37.814Z",
-      "updated": "2025-07-22T22:28:28.135Z",
+      "updated": "2025-07-23T00:33:16.083Z",
       "description": "Tasks for master context"
     }
   }

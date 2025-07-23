@@ -44,7 +44,9 @@ build = [
 ]
 
 [project.scripts]
-genbank-tool = "genbank_tool.cli:main"
+genbank-tool = "genbank_tool.cli_with_error_handling:main"
+genbank-tool-legacy = "genbank_tool.cli:main"
+genbank-tool-enhanced = "genbank_tool.cli_enhanced:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
