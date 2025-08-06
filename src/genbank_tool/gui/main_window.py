@@ -398,83 +398,107 @@ class GenBankToolGUI(QMainWindow):
                 # Simple fallback conversion for basic markdown
                 html_content = self._simple_markdown_to_html(markdown_content)
             
-            # Add CSS styling
+            # Add CSS styling for dark mode
             styled_html = f"""
             <html>
             <head>
                 <style>
                     body {{ 
-                        font-family: Arial, sans-serif; 
+                        font-family: 'Segoe UI', Arial, sans-serif; 
                         margin: 20px; 
                         line-height: 1.6; 
-                        color: #333;
+                        color: #e0e0e0;
+                        background-color: #1e1e1e;
                     }}
                     h1 {{ 
-                        color: #2c3e50; 
-                        border-bottom: 3px solid #3498db; 
+                        color: #4fc3f7; 
+                        border-bottom: 3px solid #4fc3f7; 
                         padding-bottom: 10px; 
                     }}
                     h2 {{ 
-                        color: #2c3e50; 
-                        border-bottom: 2px solid #3498db; 
+                        color: #4fc3f7; 
+                        border-bottom: 2px solid #3c3c3c; 
                         padding-bottom: 5px; 
                         margin-top: 30px;
                     }}
                     h3 {{ 
-                        color: #34495e; 
+                        color: #81c784; 
                         margin-top: 25px; 
                         margin-bottom: 10px; 
                     }}
                     h4 {{ 
-                        color: #5d6d7e; 
+                        color: #a5d6a7; 
                         margin-top: 15px; 
                     }}
                     table {{ 
                         border-collapse: collapse; 
                         width: 100%; 
-                        margin: 15px 0; 
+                        margin: 15px 0;
+                        background-color: #2b2b2b;
                     }}
                     th, td {{ 
-                        border: 1px solid #ddd; 
+                        border: 1px solid #3c3c3c; 
                         padding: 8px; 
                         text-align: left; 
                     }}
                     th {{ 
-                        background-color: #f2f2f2; 
+                        background-color: #3c3c3c; 
+                        color: #4fc3f7;
                         font-weight: bold;
+                    }}
+                    td {{
+                        color: #e0e0e0;
                     }}
                     blockquote {{
                         margin: 15px 0;
                         padding: 12px;
-                        background-color: #ecf0f1;
-                        border-left: 4px solid #3498db;
+                        background-color: #2b2b2b;
+                        border-left: 4px solid #4fc3f7;
                         font-style: italic;
+                        color: #b0b0b0;
                     }}
                     code {{
-                        background-color: #f8f9fa;
+                        background-color: #2b2b2b;
+                        color: #81c784;
                         padding: 2px 4px;
                         border-radius: 3px;
+                        border: 1px solid #3c3c3c;
                         font-family: 'Courier New', monospace;
                     }}
                     pre {{
-                        background-color: #f8f9fa;
+                        background-color: #2b2b2b;
+                        color: #4fc3f7;
                         padding: 10px;
-                        border: 1px solid #dee2e6;
+                        border: 1px solid #3c3c3c;
                         border-radius: 4px;
                         font-family: 'Courier New', monospace;
                         overflow-x: auto;
                     }}
                     ul, ol {{ 
-                        padding-left: 20px; 
+                        padding-left: 20px;
+                        color: #e0e0e0;
                     }}
                     li {{ 
                         margin-bottom: 6px; 
                     }}
                     strong {{
-                        color: #2c3e50;
+                        color: #ffd54f;
+                        font-weight: bold;
                     }}
                     em {{
-                        color: #7f8c8d;
+                        color: #ffab91;
+                        font-style: italic;
+                    }}
+                    a {{
+                        color: #4fc3f7;
+                        text-decoration: none;
+                    }}
+                    a:hover {{
+                        text-decoration: underline;
+                    }}
+                    hr {{
+                        border: 1px solid #3c3c3c;
+                        margin: 20px 0;
                     }}
                 </style>
             </head>
@@ -569,15 +593,19 @@ class GenBankToolGUI(QMainWindow):
     def create_status_panel(self) -> QWidget:
         """Create the status panel."""
         panel = QWidget()
-        layout = QVBoxLayout(panel)
-        
-        # Progress bar
-        self.progress_bar = QProgressBar()
-        layout.addWidget(self.progress_bar)
+        panel.setMaximumHeight(40)  # Limit height to reduce wasted space
+        layout = QHBoxLayout(panel)  # Use horizontal layout for compactness
+        layout.setContentsMargins(10, 5, 10, 5)  # Reduce margins
         
         # Status label
         self.status_label = QLabel("Ready to process genes")
+        self.status_label.setMinimumWidth(200)
         layout.addWidget(self.status_label)
+        
+        # Progress bar
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMaximumHeight(20)  # Make progress bar thinner
+        layout.addWidget(self.progress_bar, 1)  # Stretch to fill available space
         
         return panel
     
