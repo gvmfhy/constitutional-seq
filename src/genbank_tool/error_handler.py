@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import sys
 import time
 import traceback
@@ -10,9 +9,8 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union, Callable
+from typing import Any, Dict, List, Optional, Callable
 
-from .models import RetrievedSequence
 
 
 class ErrorType(Enum):

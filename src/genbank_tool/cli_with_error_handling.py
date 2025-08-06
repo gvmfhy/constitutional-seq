@@ -1,15 +1,13 @@
 """Enhanced CLI with comprehensive error handling and logging."""
 
-import logging
 import sys
 from pathlib import Path
-from typing import Optional, List, Dict, Any
 
 import click
 
 from .batch_processor import BatchProcessor
 from .cache_manager import CacheManager
-from .cli_utils import echo, progressbar, set_quiet_mode
+from .cli_utils import echo
 from .config import Config, get_default_config_path, create_example_config
 from .data_validator import DataValidator
 from .error_handler import setup_error_handler, get_error_handler, ErrorType

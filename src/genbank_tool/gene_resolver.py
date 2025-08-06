@@ -6,8 +6,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
-from urllib.parse import quote
+from typing import Dict, List, Optional, Tuple
 
 import requests
 from requests.adapters import HTTPAdapter

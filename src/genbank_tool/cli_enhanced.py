@@ -13,7 +13,7 @@ from .data_validator import DataValidator
 from .gene_resolver import GeneResolver
 from .input_parser import InputParser
 from .output_formatter import OutputFormatter
-from .parallel_processor import ParallelProcessor, ProcessingResult
+from .parallel_processor import ParallelProcessor
 from .rate_limiter import configure_rate_limit
 from .sequence_retriever import SequenceRetriever
 

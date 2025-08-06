@@ -1,7 +1,6 @@
 """Batch processing with checkpoint/resume capability."""
 
 import json
-import logging
 import time
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -9,7 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Generic
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .error_handler import get_error_handler, ErrorContext
+from .error_handler import get_error_handler
 from .logging_config import ProgressLogger, get_logger
 from .parallel_processor import ProcessingResult
 

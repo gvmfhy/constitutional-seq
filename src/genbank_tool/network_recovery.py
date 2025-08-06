@@ -1,6 +1,5 @@
 """Network recovery mechanisms for handling interruptions and failures."""
 
-import logging
 import time
 from dataclasses import dataclass
 from typing import Callable, Optional, Any, Dict, List
@@ -10,7 +9,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-from .error_handler import ErrorContext, ErrorType, get_error_handler
+from .error_handler import ErrorType, get_error_handler
 from .logging_config import get_logger, LogTimer
 
 logger = get_logger('network_recovery')

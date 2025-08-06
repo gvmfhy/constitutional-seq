@@ -9,10 +9,9 @@ and the biological concept of essential, foundational sequences.
 """
 
 import sys
-import json
 import re
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 from datetime import datetime
 
 try:
@@ -26,18 +25,17 @@ from PyQt5.QtWidgets import (
     QTableWidget, QTableWidgetItem, QPushButton, QTextEdit, QTextBrowser,
     QLabel, QProgressBar, QFileDialog, QMessageBox,
     QSplitter, QGroupBox, QTabWidget, QToolBar,
-    QAction, QMenuBar, QMenu, QStatusBar, QHeaderView,
-    QCheckBox, QSpinBox, QComboBox, QLineEdit, QApplication, QPlainTextEdit
+    QAction, QStatusBar, QComboBox, QApplication, QPlainTextEdit
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer, QSettings
-from PyQt5.QtGui import QIcon, QFont, QDragEnterEvent, QDropEvent
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSettings
+from PyQt5.QtGui import QFont
 
 from ..gene_resolver import GeneResolver
 from ..sequence_retriever import SequenceRetriever
 from ..transcript_selector import TranscriptSelector
 from ..data_validator import DataValidator
 from ..output_formatter import OutputFormatter
-from ..error_handler import get_error_handler, ErrorType
+from ..error_handler import get_error_handler
 from ..logging_config import setup_logging
 
 

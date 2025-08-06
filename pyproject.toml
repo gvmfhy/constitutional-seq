@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ncbi-genbank-tool"
-version = "0.1.0"
-description = "Automated NCBI GenBank CDS retrieval tool for mRNA therapeutic development"
+name = "constitutional-seq"
+version = "1.0.0"
+description = "Principle-based canonical sequence retrieval for mRNA therapeutics"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Austin Morrissey"},
+    {name = "Austin P. Morrissey", email = "austin.morrissey@proton.me"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -29,6 +29,10 @@ dependencies = [
     "openpyxl>=3.1.0",
     "biopython>=1.81",
     "PyQt5>=5.15.0",
+    "pandas>=1.3.0",
+    "numpy>=1.20.0",
+    "urllib3>=1.26.0",
+    "markdown>=3.3.0",
 ]
 
 [project.optional-dependencies]

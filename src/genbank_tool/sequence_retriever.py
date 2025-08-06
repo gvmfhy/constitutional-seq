@@ -4,15 +4,11 @@ import json
 import logging
 import re
 import time
-import xml.etree.ElementTree as ET
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import quote
+from typing import Dict, List, Optional
 
 import requests
 from Bio import Entrez, SeqIO
-from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry

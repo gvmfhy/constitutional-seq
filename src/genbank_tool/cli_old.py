@@ -1,16 +1,12 @@
 """Command-line interface for the NCBI GenBank tool."""
 
 import logging
-import sys
-from pathlib import Path
 
 import click
 
 from .gene_resolver import GeneResolver
 from .sequence_retriever import SequenceRetriever
 from .data_validator import DataValidator
-from .input_parser import InputParser
-from .output_formatter import OutputFormatter
 
 
 # Configure logging

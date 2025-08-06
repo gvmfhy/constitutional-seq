@@ -1,11 +1,8 @@
 """Enhanced UniProt integration for protein feature retrieval."""
 
-import json
 import logging
-import time
 from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any, Tuple
-from urllib.parse import quote
+from typing import Dict, List, Optional, Any
 
 import requests
 from requests.adapters import HTTPAdapter

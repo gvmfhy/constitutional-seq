@@ -3,10 +3,9 @@
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTableWidget,
     QTableWidgetItem, QPushButton, QLabel, QGroupBox,
-    QProgressBar, QMessageBox, QHeaderView
+    QProgressBar, QMessageBox
 )
-from PyQt5.QtCore import Qt, QTimer
-from datetime import datetime
+from PyQt5.QtCore import Qt
 
 from ..cache_manager import CacheManager
 

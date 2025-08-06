@@ -1,12 +1,12 @@
 """Settings dialog for GenBank Tool GUI."""
 
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
+    QDialog, QVBoxLayout, QFormLayout,
     QLineEdit, QCheckBox, QSpinBox, QPushButton,
     QTabWidget, QWidget, QGroupBox, QComboBox,
-    QLabel, QDialogButtonBox, QMessageBox
+    QDialogButtonBox, QMessageBox
 )
-from PyQt5.QtCore import Qt, QSettings
+from PyQt5.QtCore import QSettings
 
 
 class SettingsDialog(QDialog):

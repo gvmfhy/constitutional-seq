@@ -3,12 +3,12 @@
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import requests
 
 from .models import RetrievedSequence
-from .mane_selector import MANESelector, MANETranscript
+from .mane_selector import MANESelector
 from .mane_database import MANEDatabase
 
 logger = logging.getLogger(__name__)
