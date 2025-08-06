@@ -24,13 +24,56 @@ Automated tool for retrieving Coding DNA Sequences (CDS) from NCBI GenBank for m
 
 ## Installation
 
+### Prerequisites
+- Python 3.8 or higher
+- pip package manager
+- Git (for cloning the repository)
+
+### Quick Install
+
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/constitutional-seq.git
+cd constitutional-seq
+
 # Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -e ".[dev]"
+pip install -r requirements.txt
+```
+
+### Verify Installation
+
+```bash
+# Set Python path to find the modules
+export PYTHONPATH=$PWD/src:$PYTHONPATH
+
+# Test CLI
+python -m genbank_tool.cli --help
+
+# Launch GUI
+python -m genbank_tool.gui.main_window
+```
+
+Or install in development mode:
+```bash
+pip install -e .
+```
+
+### Troubleshooting
+
+If you encounter PyQt5 installation issues:
+```bash
+# macOS
+brew install pyqt5
+
+# Ubuntu/Debian
+sudo apt-get install python3-pyqt5
+
+# Windows - use pip
+pip install PyQt5
 ```
 
 ## Usage

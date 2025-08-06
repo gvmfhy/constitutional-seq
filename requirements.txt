@@ -1,0 +1,23 @@
+# Core dependencies for Constitutional.seq
+# Python 3.8+ required
+
+# GUI Framework
+PyQt5>=5.15.0
+
+# Scientific packages
+biopython>=1.79
+pandas>=1.3.0
+numpy>=1.20.0
+
+# Network and API
+requests>=2.26.0
+urllib3>=1.26.0
+
+# CLI
+click>=8.0.0
+
+# Optional - for enhanced help display
+markdown>=3.3.0
+
+# Optional - for demo scripts only
+# pyautogui>=0.9.50

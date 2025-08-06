@@ -66,3 +66,14 @@ output/
 *.xls
 data/
 cache/
+.genbank_gui_logs/
+*.audit.json
+test_output*
+.taskmaster/
+*.mov
+*.mp4
+*.gif
+
+# Demo videos
+constitutional_seq_demo.*
+demo.*
