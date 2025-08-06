@@ -93,4 +93,15 @@ mypy src
 
 ## License
 
-MIT License
+MIT License - Please use however you'd like
+
+## Author
+
+**Austin P. Morrissey**  
+August 6, 2025
+
+This is a demonstration of "vibe coding" - showing the untapped utility of computational tools for the life sciences.
+
+I'm particularly interested in learning science from others and happy to collaborate on tasks. If you have something to teach and think it can be automated but don't know how, I'll help in exchange for you teaching me something from your domain.
+
+**Contact:** austin.morrissey@proton.me
