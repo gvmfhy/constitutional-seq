@@ -142,16 +142,17 @@ class UniProtIDMapper:
                     if not gene_symbol:
                         continue
                     
-                    # Parse RefSeq transcripts (NM_ entries only)
-                    transcripts = [t.strip() for t in refseq_field.split(';') 
-                                  if t.strip().startswith('NM_')]
+                    # Parse RefSeq entries - we get proteins (NP_) not mRNA (NM_)
+                    proteins = [t.strip() for t in refseq_field.split(';') 
+                               if t.strip().startswith('NP_')]
                     
-                    if transcripts:
-                        # Store the first (canonical) transcript for this gene
-                        # UniProt lists the canonical transcript first
+                    if proteins:
+                        # Store the first (canonical) protein for this gene
+                        # We'll need to map NP_ to NM_ separately
                         if gene_symbol not in gene_to_uniprot:
                             gene_to_uniprot[gene_symbol] = uniprot_id
-                            uniprot_to_refseq[uniprot_id] = transcripts
+                            # Store the canonical protein (first one listed)
+                            uniprot_to_refseq[uniprot_id] = [proteins[0]]
             
             # Now create gene to canonical transcript mapping
             # UniProt lists the canonical transcript first
