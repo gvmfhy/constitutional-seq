@@ -1,1 +1,1 @@
-"""PyQt5 GUI for NCBI GenBank Tool."""
+"""PyQt5 GUI for Constitutional.seq (NCBI GenBank Tool)."""
