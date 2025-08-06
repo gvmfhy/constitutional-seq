@@ -32,8 +32,8 @@ When multiple transcript variants exist, the tool applies this evidence-based se
 | 1 | MANE Select | 1.00 | NCBI/EMBL-EBI consensus standard |
 | 2 | MANE Plus Clinical | 0.98 | Clinically validated alternatives |
 | 3 | RefSeq Select | 0.95 | NCBI manually curated |
-| 4 | Longest ATG transcript | 0.75 | Proxy for canonical when databases unavailable |
-| 5 | Longest CDS | 0.70 | Size-based heuristic |
+| 4 | UniProt Canonical | 0.85 | Proteomics-based canonical (when available) |
+| 5 | Longest CDS | 0.50 | Arbitrary fallback |
 | 6 | First available | 0.40 | Emergency fallback (requires review) |
 
 **Higher confidence scores indicate stronger database support.** Lower scores suggest additional validation may be beneficial.
@@ -54,7 +54,7 @@ When multiple transcript variants exist, the tool applies this evidence-based se
 
 **Start Codon Preferences:** The tool prioritizes ATG start codons for predictable translation, though alternative starts (CTG, GTG) exist in nature.
 
-**UniProt Canonical Proxy:** Direct UniProt canonical detection is not implemented. The tool uses "longest ATG-starting transcript" as a simplified proxy.
+**UniProt Canonical:** The tool can access 32,000+ UniProt canonical assignments. Requires one-time download of mapping file (119MB). Uses protein→mRNA mapping via NCBI.
 
 **Manual Review Recommended When:**
 - Confidence score < 0.8

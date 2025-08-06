@@ -144,10 +144,12 @@ The tool uses a hierarchical approach based on scientific consensus:
 #### **UniProt Canonical (confidence: 0.85)**
 - **What it is**: UniProt's expertly curated canonical isoform from 20,000+ human proteins
 - **Why it matters**: Based on proteomics evidence, structural data, and literature
-- **Implementation**: 
-  - Quick start: Built-in mappings for 60 major therapeutic targets
-  - Full coverage: Downloads UniProt ID mapping (119MB) + maps proteins→mRNA via NCBI
-- **Coverage**: Can access 32,000+ human gene canonical assignments when mapping file is downloaded
+- **How it works**:
+  1. Downloads UniProt ID mapping file (119MB, one-time download)
+  2. Maps gene symbol → UniProt canonical protein (e.g., P53 → NP_000537)
+  3. Queries NCBI to map protein → mRNA (e.g., NP_000537 → NM_000546)
+  4. Returns the canonical mRNA transcript
+- **Coverage**: 32,000+ human genes when mapping file is downloaded (60 built-in for quick start)
 
 #### **Longest CDS (confidence: 0.50)**
 - **What it is**: Fallback selection of the transcript with the longest coding sequence
@@ -168,7 +170,7 @@ The tool provides comprehensive information for each gene:
 3. **Length-based fallback** is clearly marked as arbitrary (0.50 confidence) to prevent misuse
 
 ### Known Limitations
-- **No UniProt canonical**: We removed UniProt canonical detection because protein→mRNA mapping is unreliable and introduces errors
+- **UniProt requires download**: Full UniProt canonical coverage requires downloading 119MB mapping file
 - **Non-ATG starts**: Some valid transcripts use alternative start codons (clearly flagged in output)
 - **Incomplete MANE coverage**: ~30% of human genes lack MANE annotation (as of 2024)
 
