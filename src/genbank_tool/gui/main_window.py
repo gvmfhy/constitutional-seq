@@ -1,4 +1,9 @@
-"""Main window for GenBank Tool GUI."""
+"""Main window for GenBank Tool GUI.
+
+This tool was developed through AI-human collaboration using Claude Opus 4.
+The implementation demonstrates "vibe coding" - a fluid collaboration between
+human domain expertise and AI capabilities.
+"""
 
 import sys
 import json
