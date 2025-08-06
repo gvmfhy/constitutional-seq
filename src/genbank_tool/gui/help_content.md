@@ -157,10 +157,11 @@ MANE transcripts are selected based on:
 **The MANE Selection Process:**
 1. For gene "PECAM1", check MANE database (~19,338 genes)
 2. Database query returns:
-   - MANE Select: NM_000442.5 (RefSeq) = ENST00000563921.5 (Ensembl)
+   - MANE Select: NM_000442.5 (RefSeq accession)
+   - Tool uses RefSeq ID to fetch from GenBank
    - Confidence: 1.0 (highest possible)
-3. This means BOTH RefSeq and Ensembl experts agree
-4. If MANE Select exists, STOP - use this transcript
+3. This means BOTH RefSeq and Ensembl experts agree on this transcript
+4. If MANE Select exists, use this transcript with highest confidence
 
 **MANE Plus Clinical:**
 Some genes have additional "MANE Plus Clinical" transcripts:
@@ -169,8 +170,8 @@ Some genes have additional "MANE Plus Clinical" transcripts:
 - Confidence: 0.98 (slightly lower than Select)
 
 **MANE Coverage:**
-- Currently covers ~19,000 human protein-coding genes
-- ~95% of clinically relevant genes included
+- Currently covers ~19,338 human protein-coding genes (based on our database)
+- Majority of protein-coding genes included
 - For genes without MANE, tool falls back to other selection methods
 
 ### Step 3: GenBank Sequence Retrieval
@@ -252,9 +253,10 @@ Not all genes have MANE annotation (~5% lack it). The tool implements a scientif
    - Often matches CCDS (Consensus CDS) project
 
 2. **UniProt Canonical Proxy (0.75):**
-   - Since protein→mRNA mapping is complex
-   - We use "longest ATG-starting transcript" as proxy
-   - Rationale: Longest often = most complete protein
+   - Direct UniProt canonical detection not implemented
+   - Tool uses "longest ATG-starting transcript" as proxy
+   - Rationale: Longest often captures most complete protein
+   - This is a simplification - not actual UniProt canonical
 
 3. **Longest CDS (0.70):**
    - Biological principle: Evolution preserves functional length
