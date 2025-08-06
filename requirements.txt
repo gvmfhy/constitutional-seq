@@ -16,6 +16,9 @@ urllib3>=1.26.0
 # CLI
 click>=8.0.0
 
+# Excel support
+openpyxl>=3.1.0
+
 # Optional - for enhanced help display
 markdown>=3.3.0
 
