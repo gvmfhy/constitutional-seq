@@ -126,13 +126,26 @@ When a user enters a gene name (like "p53", "VEGF", or even outdated symbols), t
 
 ### 2. Transcript Retrieval (NCBI Module)
 
-**Purpose**: Collect all possible transcript variants for comprehensive selection.
+**Purpose**: Extract the exact CDS (Coding DNA Sequence) needed for plasmid cloning and mRNA synthesis.
 
-Armed with the NCBI Gene ID, this module queries the NCBI Entrez system to retrieve every RefSeq transcript associated with the gene. RefSeq is NCBI's curated collection of reference sequences, representing the gold standard for sequence data. The module fetches all mRNA transcripts (NM_ accessions) and extracts their coding sequences (CDS) - the actual DNA that gets translated into protein.
+Armed with the NCBI Gene ID, this module queries the NCBI Entrez system to retrieve every RefSeq transcript associated with the gene. RefSeq is NCBI's curated collection of reference sequences, representing the gold standard for sequence data. The module fetches all mRNA transcripts (NM_ accessions) and extracts their coding sequences (CDS).
 
-**Why this matters**: Human genes typically produce multiple transcript variants through alternative splicing, alternative promoters, and other mechanisms. Some genes have over 20 variants. Each variant might produce a different protein isoform with distinct functions. For mRNA therapeutics, choosing the wrong variant could mean targeting the wrong biological pathway or tissue.
+**What is a CDS?**: The CDS is the exact DNA sequence (ATGC nucleotides) that encodes the protein - starting from the start codon (usually ATG) through to the stop codon (TAA, TAG, or TGA). This is what you clone into your plasmid vector. For example:
+```
+ATGGAGGAGCCGCAGTCAGATCCTAGCGTCGAG...TGCTGTCTCCGGGTGA
+```
+This DNA gets transcribed to mRNA in vitro (T7/SP6 polymerase), then the mRNA gets translated to protein in cells.
 
-**Data passed to next stage**: List of all transcript objects, each containing accession number, version, CDS sequence, CDS length, and metadata flags
+**The Molecular Biology Pipeline**:
+1. **CDS (DNA)** → cloned into plasmid vector
+2. **Plasmid** → linearized and used as template
+3. **In vitro transcription** → produces mRNA (with added 5' cap, 3' polyA tail)
+4. **mRNA delivery** → transfection/injection into cells
+5. **Translation** → ribosomes produce the therapeutic protein
+
+**Why this matters**: Human genes typically produce multiple transcript variants through alternative splicing, alternative promoters, and other mechanisms. Some genes have over 20 variants. Each variant produces a different CDS, encoding a different protein isoform with potentially distinct functions. For mRNA therapeutics, choosing the wrong CDS variant could mean targeting the wrong biological pathway, expressing in the wrong tissue, or producing a non-functional protein.
+
+**Data passed to next stage**: List of all transcript objects, each containing accession number, version, CDS sequence (the actual ATGC string), CDS length in base pairs, and metadata flags
 
 ### 3. Canonical Transcript Selection (Hierarchical Selection Engine)
 
@@ -158,10 +171,22 @@ For genes without MANE curation, NCBI provides RefSeq Select - their best comput
 
 UniProt approaches the problem from the protein perspective. Their curators review experimental evidence from mass spectrometry, crystal structures, and functional studies to identify the canonical protein isoform. Constitutional.seq maps these protein selections back to their corresponding mRNA transcripts through a sophisticated pipeline:
 
-1. **Gene → Protein Mapping**: Downloads UniProt's ID mapping database (119MB) containing 32,000+ human genes
-2. **Protein Accession Retrieval**: Identifies the UniProt canonical protein (e.g., TP53 → NP_000537)
-3. **Protein → mRNA Reverse Mapping**: Queries NCBI's protein database to find the source mRNA
-4. **Validation**: Confirms the mRNA produces the expected protein sequence
+**Understanding NM vs NP Accessions**: 
+- **NM_** (RefSeq mRNA): These are the mRNA transcript sequences - the actual RNA molecules that get translated into proteins. Example: NM_000546 is the mRNA for human p53.
+- **NP_** (RefSeq Protein): These are the protein sequences - the amino acid chains that result from translating mRNA. Example: NP_000537 is the p53 protein.
+- **The Challenge**: UniProt provides protein accessions (NP_), but mRNA therapeutics need the corresponding mRNA sequences (NM_). A single protein can theoretically come from multiple mRNA variants due to codon degeneracy, though in practice RefSeq maintains 1:1 mappings.
+
+**The Constitutional.seq Pipeline**:
+
+1. **Gene → Protein Mapping**: Downloads UniProt's ID mapping database (119MB) containing 32,000+ human genes mapped to their canonical protein accessions
+2. **Protein Accession Retrieval**: Identifies the UniProt canonical protein (e.g., TP53 → NP_000537.3)
+3. **Protein → mRNA Reverse Mapping**: This is the critical step. The tool queries NCBI's protein database with the NP_ accession and parses the GenBank record to find the source mRNA in the DBSOURCE field. For example:
+   ```
+   DBSOURCE    REFSEQ: accession NM_000546.6
+   ```
+4. **Validation**: Confirms the retrieved NM_ accession exists in our transcript set and contains the expected CDS
+
+**Why This Complexity?**: UniProt focuses on proteins because that's where biological function resides. They identify which protein isoform is "canonical" based on functional studies. But for mRNA therapeutics, we need the instructions (mRNA) not the final product (protein). This NP→NM mapping bridges that gap, ensuring we get the mRNA that produces UniProt's expertly selected canonical protein.
 
 This protein-centric approach is particularly valuable for genes where protein function, rather than RNA expression, drives biological importance.
 
@@ -173,16 +198,28 @@ When all curated sources fail, the tool falls back to a simple heuristic: select
 
 ### 4. Output Generation and Quality Control
 
-**Purpose**: Provide comprehensive, validated results with clear confidence indicators.
+**Purpose**: Deliver the exact CDS sequence for cloning, with comprehensive metadata for informed decision-making.
 
 The final stage packages the selected transcript with rich metadata that enables informed decision-making. Every result includes:
 
-- **The CDS sequence** in 5' → 3' orientation, ready for direct use in molecular biology applications
+- **The CDS sequence**: The complete DNA sequence (ATGC only) from start codon to stop codon, in 5' → 3' orientation. This is exactly what you need to:
+  - Order as a gene synthesis product (gBlock, GenScript, etc.)
+  - Clone into your expression vector between restriction sites
+  - Use as template for PCR amplification
+  - Design primers for Gibson assembly or other cloning methods
+  
+  Example output:
+  ```
+  ATGGAGGAGCCGCAGTCAGATCCTAGCGTCGAGCCCCCTCTGAGTCAGGAAACATTTTCAGACCTATGGAAACTACTTCCTGAAAACAACGTTCTGTCCCCCTTGCCGTCCCAAGCAATGGATGATTTGATGCTGTCCCCGGACGATATTGAACAATGGTTCACTGAAGACCCAGGTCCAGATGAAGCTCCCAGAATGCCAGAGGCTGCTCCCCGCGTGGCCCCTGCACCAGCAGCTCCTACACCGGCGGCCCCTGCACCAGCCCCCTCCTGGCCCCTGTCATCTTCTGTCCCTTCCCAGAAAACCTACCAGGGCAGCTACGGTTTCCGTCTGGGCTTCTTGCATTCTGGGACAGCCAAGTCTGTGACTTGCACGTACTCCCCTGCCCTCAACAAGATGTTTTGCCAACTGGCCAAGACCTGCCCTGTGCAGCTGTGGGTTGATTCCACACCCCCGCCCGGCACCCGCGTCCGCGCCATGGCCATCTACAAGCAGTCACAGCACATGACGGAGGTTGTGAGGCGCTGCCCCCACCATGAGCGCTGCTCAGATAGCGATGGTCTGGCCCCTCCTCAGCATCTTATCCGAGTGGAAGGAAATTTGCGTGTGGAGTATTTGGATGACAGAAACACTTTTCGACATAGTGTGGTGGTGCCCTATGAGCCGCCTGAGGTTGGCTCTGACTGTACCACCATCCACTACAACTACATGTGTAACAGTTCCTGCATGGGCGGCATGAACCGGAGGCCCATCCTCACCATCATCACACTGGAAGACTCCAGTGGTAATCTACTGGGACGGAACAGCTTTGAGGTGCGTGTTTGTGCCTGTCCTGGGAGAGACCGGCGCACAGAGGAAGAGAATCTCCGCAAGAAAGGGGAGCCTCACCACGAGCTGCCCCCAGGGAGCACTAAGCGAGCACTGCCCAACAACACCAGCTCCTCTCCCCAGCCAAAGAAGAAACCACTGGATGGAGAATATTTCACCCTTCAGATCCGTGGGCGTGAGCGCTTCGAGATGTTCCGAGAGCTGAATGAGGCCTTGGAACTCAAGGATGCCCAGGCTGGGAAGGAGCCAGGGGGGAGCAGGGCTCACTCCAGCCACCTGAAGTCCAAAAAGGGTCAGTCTACCTCCCGCCATAAAAAACTCATGTTCAAGACAGAAGGGCCTGACTCAGACTGA
+  ```
+  
 - **Confidence score** (0.0-1.0) indicating the reliability of the selection
-- **Selection method** explicitly stating which criterion was used
+- **Selection method** explicitly stating which criterion was used (MANE, RefSeq, UniProt, etc.)
 - **Warning flags** for potential issues (non-ATG starts, multiple equal-length variants, missing MANE despite gene importance)
 - **Alternatives count** showing how many other transcripts exist, prompting review for critical applications
 - **Full audit trail** documenting every API call and decision point for reproducibility
+
+**What you do with the CDS**: This sequence is ready for immediate use in standard molecular biology workflows - no further processing needed. Simply copy-paste into your cloning software, gene synthesis order form, or primer design tool.
 
 ### Scientific Rationale for the Hierarchy
 
