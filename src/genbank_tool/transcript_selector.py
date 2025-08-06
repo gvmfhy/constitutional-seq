@@ -10,6 +10,7 @@ import requests
 from .models import RetrievedSequence
 from .mane_selector import MANESelector
 from .mane_database import MANEDatabase
+from .uniprot_canonical import UniProtCanonicalMapper
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class SelectionMethod(Enum):
     MANE_SELECT = "MANE Select"
     MANE_PLUS_CLINICAL = "MANE Plus Clinical"
     REFSEQ_SELECT = "RefSeq Select"
+    UNIPROT_CANONICAL = "UniProt Canonical"
     LONGEST_CDS = "Longest CDS (Arbitrary)"
     MOST_RECENT_VERSION = "Most Recent Version"
     USER_OVERRIDE = "User Override"
@@ -59,6 +61,7 @@ class TranscriptSelector:
         
         # Initialize MANE selector and database if enabled
         self.mane_selector = MANESelector(api_key=api_key) if mane_enabled else None
+        self.uniprot_mapper = UniProtCanonicalMapper() if uniprot_enabled else None
         self.mane_database = MANEDatabase() if mane_enabled else None
         
         # Setup session for API requests
@@ -172,9 +175,28 @@ class TranscriptSelector:
                 alternatives_count=len(transcripts) - 1
             )
         
-        # 4. Skip UniProt canonical check - removed due to unreliable proxy method
-        # The "longest ATG transcript" heuristic has no scientific basis for canonical selection
-        # Better to proceed directly to longest CDS as an explicit algorithmic choice
+        # 4. Check UniProt canonical (using curated mappings)
+        if self.uniprot_enabled and self.uniprot_mapper:
+            # First try built-in mappings, then optionally API
+            canonical_accession = self.uniprot_mapper.get_canonical_transcript(
+                gene_symbol, use_api=False  # Start with cached mappings only
+            )
+            
+            if canonical_accession:
+                # Find matching transcript in our set
+                for transcript in transcripts:
+                    if transcript.accession.startswith(canonical_accession):
+                        logger.info(f"Found UniProt canonical: {transcript.full_accession}")
+                        return TranscriptSelection(
+                            transcript=transcript,
+                            method=SelectionMethod.UNIPROT_CANONICAL,
+                            confidence=0.85,  # High confidence for curated mappings
+                            rationale=f"UniProt canonical transcript (curated mapping)",
+                            warnings=warnings,
+                            alternatives_count=len(transcripts) - 1
+                        )
+                
+                warnings.append(f"UniProt canonical {canonical_accession} not in retrieved set")
         
         # 5. Select longest CDS (with preference for ATG start)
         if self.prefer_longest:

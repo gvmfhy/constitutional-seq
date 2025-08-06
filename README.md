@@ -141,6 +141,12 @@ The tool uses a hierarchical approach based on scientific consensus:
 - **Why it matters**: Provides coverage for genes without MANE curation
 - **Selection criteria**: Algorithm considers expression data, conservation, and annotations
 
+#### **UniProt Canonical (confidence: 0.85)**
+- **What it is**: UniProt's expertly curated canonical isoform
+- **Why it matters**: Based on proteomics evidence, structural data, and literature
+- **Coverage**: Built-in mappings for ~60 major therapeutic targets
+- **Note**: Uses curated static mappings to avoid unreliable API timeouts
+
 #### **Longest CDS (confidence: 0.50)**
 - **What it is**: Fallback selection of the transcript with the longest coding sequence
 - **Why it matters**: When no curated data exists, provides a reproducible (though arbitrary) choice
