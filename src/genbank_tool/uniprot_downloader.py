@@ -189,25 +189,88 @@ class UniProtIDMapper:
         except Exception as e:
             logger.warning(f"Failed to save parsed cache: {e}")
     
-    def get_canonical_transcript(self, gene_symbol: str) -> Optional[str]:
+    def map_protein_to_mrna(self, protein_accession: str) -> Optional[str]:
+        """Map a protein accession (NP_) to its mRNA transcript (NM_) via NCBI.
+        
+        Args:
+            protein_accession: RefSeq protein accession (e.g., NP_000537.3)
+            
+        Returns:
+            RefSeq mRNA accession (e.g., NM_000546) or None
+        """
+        try:
+            import requests
+            import re
+            
+            # Remove version if present
+            protein_id = protein_accession.split('.')[0]
+            
+            # Query NCBI for the protein record
+            response = requests.get(
+                'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
+                params={
+                    'db': 'protein',
+                    'id': protein_accession,
+                    'rettype': 'gb',
+                    'retmode': 'text'
+                },
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                return None
+            
+            # Look for the mRNA reference in the GenBank record
+            # It's typically in DBSOURCE or /coded_by qualifier
+            text = response.text
+            
+            # Try DBSOURCE line first (most reliable)
+            dbsource_match = re.search(r'DBSOURCE\s+REFSEQ:\s+accession\s+(NM_\d+)', text)
+            if dbsource_match:
+                return dbsource_match.group(1)
+            
+            # Try /coded_by qualifier
+            coded_by_match = re.search(r'/coded_by="(NM_\d+)', text)
+            if coded_by_match:
+                return coded_by_match.group(1)
+            
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Failed to map {protein_accession} to mRNA: {e}")
+            return None
+    
+    def get_canonical_transcript(self, gene_symbol: str, map_to_mrna: bool = False) -> Optional[str]:
         """Get the canonical transcript for a gene.
         
         Args:
             gene_symbol: HGNC gene symbol
+            map_to_mrna: If True, map protein to mRNA via NCBI
             
         Returns:
-            RefSeq transcript ID (without version) or None
+            RefSeq transcript ID (NM_) or protein ID (NP_) depending on map_to_mrna
         """
         # Try exact match first
-        if gene_symbol in self.gene_to_transcript:
-            return self.gene_to_transcript[gene_symbol]
+        result = self.gene_to_transcript.get(gene_symbol)
         
         # Try uppercase
-        gene_upper = gene_symbol.upper()
-        if gene_upper in self.gene_to_transcript:
-            return self.gene_to_transcript[gene_upper]
+        if not result:
+            gene_upper = gene_symbol.upper()
+            result = self.gene_to_transcript.get(gene_upper)
         
-        return None
+        # If we have a protein and want mRNA, map it
+        if result and map_to_mrna and result.startswith('NP_'):
+            mrna = self.map_protein_to_mrna(result)
+            if mrna:
+                # Cache the mRNA for future use
+                self.gene_to_transcript[gene_symbol] = mrna
+                self._save_parsed_cache()
+                return mrna
+            else:
+                logger.warning(f"Failed to map {result} to mRNA for {gene_symbol}")
+                return None
+        
+        return result
     
     def update_and_get_mapping(self) -> Dict[str, str]:
         """Download (if needed), parse, and return the full mapping.

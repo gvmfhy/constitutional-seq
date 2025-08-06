@@ -144,8 +144,10 @@ The tool uses a hierarchical approach based on scientific consensus:
 #### **UniProt Canonical (confidence: 0.85)**
 - **What it is**: UniProt's expertly curated canonical isoform from 20,000+ human proteins
 - **Why it matters**: Based on proteomics evidence, structural data, and literature
-- **Current implementation**: Built-in hardcoded mappings for ~60 major therapeutic targets
-- **Note**: Full UniProt integration requires protein→mRNA mapping (complex due to UniProt storing proteins not transcripts)
+- **Implementation**: 
+  - Quick start: Built-in mappings for 60 major therapeutic targets
+  - Full coverage: Downloads UniProt ID mapping (119MB) + maps proteins→mRNA via NCBI
+- **Coverage**: Can access 32,000+ human gene canonical assignments when mapping file is downloaded
 
 #### **Longest CDS (confidence: 0.50)**
 - **What it is**: Fallback selection of the transcript with the longest coding sequence

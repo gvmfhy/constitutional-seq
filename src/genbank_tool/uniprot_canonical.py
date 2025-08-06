@@ -42,13 +42,11 @@ class UniProtCanonicalMapper:
             try:
                 self.id_mapper = UniProtIDMapper(cache_dir=self.cache_dir)
                 # This will load from cache or download if needed
-                full_mapping = self.id_mapper.update_and_get_mapping()
-                if full_mapping:
-                    self.mapping = full_mapping
-                    logger.info(f"Loaded comprehensive UniProt mapping: {len(self.mapping)} genes")
-                    return
+                # Note: This initially loads protein mappings, we'll convert to mRNA on demand
+                logger.info("Loading UniProt ID mapper for comprehensive coverage")
             except Exception as e:
-                logger.warning(f"Failed to load full UniProt mapping: {e}")
+                logger.warning(f"Failed to initialize UniProt ID mapper: {e}")
+                self.id_mapper = None
         
         # Fall back to built-in mappings
         self._load_mapping()
@@ -226,6 +224,21 @@ class UniProtCanonicalMapper:
         gene_upper = gene_symbol.upper()
         if gene_upper in self.mapping:
             return self.mapping[gene_upper]
+        
+        # Try the comprehensive ID mapper if available
+        if not use_api and self.id_mapper:
+            # First check if mapper has data
+            if not self.id_mapper.gene_to_transcript:
+                self.id_mapper.update_and_get_mapping()
+            
+            # Now try to get the canonical transcript
+            # This will map NP_ to NM_ via NCBI if needed
+            transcript = self.id_mapper.get_canonical_transcript(gene_symbol, map_to_mrna=True)
+            if transcript:
+                logger.info(f"Found UniProt canonical via ID mapper: {gene_symbol} -> {transcript}")
+                # Cache for future use
+                self.update_mapping(gene_symbol, transcript)
+                return transcript
         
         # Optionally try API if not in cache
         if use_api:
