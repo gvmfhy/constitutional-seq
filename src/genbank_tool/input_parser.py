@@ -297,14 +297,22 @@ class InputParser:
         if not header_row:
             return None
         
-        # Look for gene-related column names
-        gene_keywords = ['gene', 'symbol', 'name', 'gene_symbol', 'gene_name', 'hugo']
+        # Look for gene-related column names with priority
+        # Higher priority keywords should be checked first
+        priority_keywords = [
+            ['hugo', 'gene_symbol', 'gene symbol'],  # Most specific
+            ['symbol'],  # Gene symbol
+            ['gene_name', 'gene name'],  # Gene name
+            ['gene'],  # Generic gene
+            ['name']  # Most generic
+        ]
         
-        for i, cell in enumerate(header_row):
-            if cell and isinstance(cell, str):
-                cell_lower = cell.lower().strip()
-                if any(keyword in cell_lower for keyword in gene_keywords):
-                    return i
+        for keyword_group in priority_keywords:
+            for i, cell in enumerate(header_row):
+                if cell and isinstance(cell, str):
+                    cell_lower = cell.lower().strip()
+                    if any(keyword in cell_lower for keyword in keyword_group):
+                        return i
         
         return None
     

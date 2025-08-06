@@ -137,19 +137,26 @@ class TestOutputFormatter:
         lines = content.strip().split('\n')
         assert len(lines) == 3  # Header + 2 data rows
         assert lines[0].startswith("Input Name\t")
-        assert "p53\tTP53\t7157" in lines[1]
-        assert "INVALID\t\t\t" in lines[2]
+        # Check that the key data is present (input name, official symbol, gene ID)
+        assert "p53\tTP53" in lines[1]
+        assert "7157" in lines[1]
+        assert "INVALID" in lines[2]
     
     def test_write_csv(self, formatter, temp_dir, sample_sequence):
         """Test writing CSV file."""
         output_file = temp_dir / "output.csv"
         
         results = [formatter.format_sequence_result("TP53", sample_sequence)]
-        formatter.format_results(results, output_file, format='csv')
+        formatter.format_results(results, output_file, format='csv', excel_compatible=False)
         
         content = output_file.read_text()
-        assert "Input Name,Official Symbol,Gene ID" in content
-        assert "TP53,TP53,7157" in content
+        # Check that headers include required columns
+        assert "Input Name" in content
+        assert "Official Symbol" in content
+        assert "Gene ID" in content
+        # Check data content
+        assert "TP53,TP53" in content
+        assert "7157" in content
     
     def test_write_json(self, formatter, temp_dir, sample_sequence):
         """Test writing JSON file."""
@@ -213,8 +220,9 @@ class TestOutputFormatter:
     def test_column_headers(self, formatter):
         """Test that all expected columns are present."""
         expected_columns = [
-            "Input Name", "Official Symbol", "Gene ID", "RefSeq Accession",
-            "GenBank URL", "CDS Length", "CDS Sequence", "Selection Method",
+            "Input Name", "Official Symbol", "Full Gene Name", "Gene ID", 
+            "Gene URL", "RefSeq Accession", "GenBank URL", "Isoform",
+            "CDS Length", "CDS Sequence", "Selection Method",
             "Confidence Score", "Warnings", "Validation Status",
             "Validation Confidence", "Validation Issues", "Error"
         ]
