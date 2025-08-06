@@ -404,31 +404,44 @@ class GenBankToolGUI(QMainWindow):
             <head>
                 <style>
                     body {{ 
-                        font-family: 'Segoe UI', Arial, sans-serif; 
-                        margin: 20px; 
-                        line-height: 1.6; 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; 
+                        margin: 25px 35px; 
+                        line-height: 1.75; 
                         color: #e0e0e0;
                         background-color: #1e1e1e;
+                        font-size: 14px;
                     }}
                     h1 {{ 
                         color: #4fc3f7; 
                         border-bottom: 3px solid #4fc3f7; 
-                        padding-bottom: 10px; 
+                        padding-bottom: 12px;
+                        margin-top: 35px;
+                        margin-bottom: 20px;
+                        font-size: 28px;
+                        font-weight: 600;
                     }}
                     h2 {{ 
                         color: #4fc3f7; 
                         border-bottom: 2px solid #3c3c3c; 
-                        padding-bottom: 5px; 
+                        padding-bottom: 8px; 
                         margin-top: 30px;
+                        margin-bottom: 15px;
+                        font-size: 22px;
+                        font-weight: 600;
                     }}
                     h3 {{ 
                         color: #81c784; 
                         margin-top: 25px; 
-                        margin-bottom: 10px; 
+                        margin-bottom: 12px;
+                        font-size: 18px;
+                        font-weight: 600;
                     }}
                     h4 {{ 
                         color: #a5d6a7; 
-                        margin-top: 15px; 
+                        margin-top: 20px;
+                        margin-bottom: 10px;
+                        font-size: 16px;
+                        font-weight: 600;
                     }}
                     table {{ 
                         border-collapse: collapse; 
@@ -474,12 +487,24 @@ class GenBankToolGUI(QMainWindow):
                         font-family: 'Courier New', monospace;
                         overflow-x: auto;
                     }}
+                    p {{
+                        margin-bottom: 15px;
+                        text-align: left;
+                    }}
                     ul, ol {{ 
-                        padding-left: 20px;
+                        padding-left: 25px;
                         color: #e0e0e0;
+                        margin-bottom: 15px;
                     }}
                     li {{ 
-                        margin-bottom: 6px; 
+                        margin-bottom: 8px;
+                        line-height: 1.6;
+                    }}
+                    ul li {{
+                        list-style-type: disc;
+                    }}
+                    ol li {{
+                        list-style-type: decimal;
                     }}
                     strong {{
                         color: #ffd54f;

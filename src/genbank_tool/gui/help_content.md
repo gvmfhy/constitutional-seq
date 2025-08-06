@@ -6,52 +6,52 @@ This tool retrieves validated canonical coding sequences (CDS) for mRNA therapeu
 
 ## 🔄 Complete Processing Pipeline
 
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║                    mRNA THERAPEUTIC CDS RETRIEVAL                    ║
-║                         Scientific Workflow                          ║
-╚═══════════════════════════════════════════════════════════════════╝
+### mRNA THERAPEUTIC CDS RETRIEVAL - Scientific Workflow
 
-┌─────────────────────────────────────────────────────────────────────┐
-│ USER INPUT: Any gene name format                                    │
-│ Examples: "cd31", "P53", "Her2", "vegf", "IL-2"                    │
-└─────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────┐
-│ STEP 1: HGNC GENE NAME RESOLUTION                                   │
-│ • Queries HUGO Gene Nomenclature Committee database                 │
-│ • Resolves ALL aliases to official symbol                           │
-│ • Returns: PECAM1, TP53, ERBB2, VEGFA, IL2                        │
-│ • Provides stable NCBI Gene ID for database queries                 │
-│ Scientific Basis: Eliminates nomenclature ambiguity                 │
-└─────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────┐
-│ STEP 2: MANE DATABASE CHECK                                         │
-│ • Queries Matched Annotation (NCBI + EMBL-EBI consensus)           │
-│ • Checks ~19,000 genes for expert-selected transcript              │
-│ • Returns: e.g., NM_000546.6 for TP53                              │
-│ • Confidence: 1.0 (gold standard)                                   │
-│ Scientific Basis: International consensus on canonical transcript    │
-└─────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────┐
-│ STEP 3: GENBANK RETRIEVAL & SELECTION                              │
-│ • Fetches ALL transcript variants (10-50 per gene)                 │
-│ • Identifies MANE/RefSeq Select/best match                         │
-│ • Extracts CDS region (ATG → Stop codon)                           │
-│ • Validates reading frame and completeness                          │
-│ Scientific Basis: Ensures complete, functional coding sequence      │
-└─────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────┐
-│ OUTPUT: THERAPEUTIC-GRADE CDS                                       │
-│ • DNA sequence: ATGCCCAGCGGC...TGA                                 │
-│ • Confidence score: 0.40-1.00                                       │
-│ • Selection method documented                                       │
-│ • Ready for codon optimization → mRNA synthesis                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+**USER INPUT → HGNC → MANE → GENBANK → CDS OUTPUT**
+
+---
+
+### **STEP 1: User Input**
+- **Accepts:** Any gene name format
+- **Examples:** "cd31", "P53", "Her2", "vegf", "IL-2"
+- **Case-insensitive:** Handles uppercase, lowercase, mixed case
+- **Hyphen-tolerant:** IL-2 and IL2 both work
+
+---
+
+### **STEP 2: HGNC Gene Name Resolution**
+- **Queries:** HUGO Gene Nomenclature Committee database
+- **Resolves:** ALL aliases to official symbol
+- **Returns:** PECAM1, TP53, ERBB2, VEGFA, IL2
+- **Provides:** Stable NCBI Gene ID for database queries
+- **Scientific Basis:** Eliminates nomenclature ambiguity that causes experimental failures
+
+---
+
+### **STEP 3: MANE Database Check**
+- **Queries:** Matched Annotation (NCBI + EMBL-EBI consensus)
+- **Checks:** ~19,000 genes for expert-selected transcript
+- **Returns:** e.g., NM_000546.6 for TP53
+- **Confidence:** 1.0 (gold standard)
+- **Scientific Basis:** International consensus on canonical transcript
+
+---
+
+### **STEP 4: GenBank Retrieval & Selection**
+- **Fetches:** ALL transcript variants (10-50 per gene)
+- **Identifies:** MANE/RefSeq Select/best match
+- **Extracts:** CDS region (ATG → Stop codon)
+- **Validates:** Reading frame and completeness
+- **Scientific Basis:** Ensures complete, functional coding sequence
+
+---
+
+### **OUTPUT: Therapeutic-Grade CDS**
+- **DNA sequence:** ATGCCCAGCGGC...TGA
+- **Confidence score:** 0.40-1.00
+- **Selection method:** Documented and traceable
+- **Ready for:** Codon optimization → mRNA synthesis
 
 ## 🚀 Quick Start
 
@@ -79,37 +79,16 @@ This tool retrieves validated canonical coding sequences (CDS) for mRNA therapeu
 
 ## 🔬 The Complete Data Processing Pipeline
 
-```
-╔══════════════════════════════════════════════════════════════╗
-║              COMPLETE DATA FLOW (FINAL DESIGN)               ║
-╚══════════════════════════════════════════════════════════════╝
+### Data Flow Architecture
 
-USER INPUT: "cd31", "P53", "Her2", etc.
-            ↓
-┌──────────────────────────────────────────┐
-│ 1. HGNC RESOLVER (NEW)                   │
-│   - Handles any case                     │
-│   - Resolves aliases                     │
-│   - Returns: PECAM1, TP53, ERBB2        │
-│   - Provides NCBI Gene ID                │
-└──────────────────────────────────────────┘
-            ↓
-┌──────────────────────────────────────────┐
-│ 2. MANE DATABASE CHECK                   │
-│   - Is there MANE Select?                │
-│   - Returns: NM_000546.6                 │
-│   - Highest confidence                   │
-└──────────────────────────────────────────┘
-            ↓
-┌──────────────────────────────────────────┐
-│ 3. GENBANK RETRIEVAL                     │
-│   - Fetch all transcripts                │
-│   - Find MANE/best transcript            │
-│   - Extract CDS sequence                 │
-└──────────────────────────────────────────┘
-            ↓
-OUTPUT: Actual DNA sequence
-```
+**Input Processing → Gene Resolution → Transcript Selection → Sequence Retrieval**
+
+The tool implements a four-stage pipeline that transforms any gene identifier into a validated therapeutic-grade CDS sequence:
+
+1. **HGNC Resolver** - Standardizes gene nomenclature
+2. **MANE Database** - Identifies consensus transcripts  
+3. **GenBank Retrieval** - Fetches all variants
+4. **CDS Extraction** - Returns validated sequences
 
 ### Understanding the Challenge
 
@@ -242,25 +221,28 @@ GenBank records contain more than just sequences - they include:
 **When MANE Isn't Available:**
 Not all genes have MANE annotation (~5% lack it). The tool implements a scientifically-grounded fallback hierarchy:
 
-```
-┌─────────────────────────────────────────────────┐
-│         SELECTION HIERARCHY FLOWCHART           │
-├─────────────────────────────────────────────────┤
-│ 1. MANE Select? → Yes → Use (Confidence: 1.0)  │
-│    ↓ No                                         │
-│ 2. MANE Plus Clinical? → Yes → Use (0.98)      │
-│    ↓ No                                         │
-│ 3. RefSeq Select? → Yes → Use (0.95)           │
-│    ↓ No                                         │
-│ 4. UniProt Canonical? → Yes* → Use (0.75)      │
-│    ↓ No (*simplified to longest ATG)           │
-│ 5. Longest CDS with ATG? → Yes → Use (0.70)    │
-│    ↓ No                                         │
-│ 6. Most Recent Version → Use (0.50)            │
-│    ↓ If multiple same length                    │
-│ 7. First Available → Use (0.40) ⚠️              │
-└─────────────────────────────────────────────────┘
-```
+#### **Selection Priority Order:**
+
+1. **MANE Select** → Confidence: 1.0
+   - NCBI/EMBL-EBI consensus choice
+
+2. **MANE Plus Clinical** → Confidence: 0.98
+   - Additional clinically relevant transcripts
+
+3. **RefSeq Select** → Confidence: 0.95
+   - NCBI manually curated representative
+
+4. **UniProt Canonical (proxy)** → Confidence: 0.75
+   - Simplified to longest ATG-starting transcript
+
+5. **Longest CDS with ATG** → Confidence: 0.70
+   - Algorithmic selection based on size
+
+6. **Most Recent Version** → Confidence: 0.50
+   - Fallback when no biological criteria met
+
+7. **First Available** → Confidence: 0.40 ⚠️
+   - Emergency fallback - requires manual review
 
 **Scientific Justification for Each Level:**
 
