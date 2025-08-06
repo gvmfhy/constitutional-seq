@@ -645,9 +645,9 @@ class GenBankToolGUI(QMainWindow):
         layout.addWidget(top_row)
         
         # Bottom row: AI Safety link
-        link_label = QLabel('<a href="https://www.aisafetybook.com/" style="color: #4fc3f7; text-decoration: none;">📚 Interested in AI safety? Check out The AI Safety Book</a>')
+        link_label = QLabel('<a href="https://www.aisafetybook.com/" style="color: #4fc3f7; text-decoration: none; font-size: 14px;">📚 Interested in AI safety? Check out The AI Safety Book</a>')
         link_label.setOpenExternalLinks(True)  # Enable clicking to open in browser
-        link_label.setStyleSheet("QLabel { font-size: 11px; color: #b0b0b0; }")
+        link_label.setStyleSheet("QLabel { font-size: 14px; color: #b0b0b0; }")
         link_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(link_label)
         
