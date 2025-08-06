@@ -64,6 +64,17 @@ genbank-tool genes.txt output.tsv --verbose --log-level DEBUG
 
 See [Error Handling Documentation](docs/error_handling.md) for comprehensive recovery features.
 
+### CLI Versions
+
+The tool provides multiple CLI entry points for different use cases:
+
+- **`genbank-tool`** - Main CLI with comprehensive error handling and recovery features (recommended)
+- **`genbank-tool-enhanced`** - Enhanced CLI with additional features for advanced users  
+- **`genbank-tool-legacy`** - Legacy CLI for backward compatibility
+- **`genbank-tool-gui`** - Launch the graphical user interface
+
+For most users, the standard `genbank-tool` command is recommended as it includes the most robust error handling and recovery mechanisms.
+
 ## Development
 
 ```bash

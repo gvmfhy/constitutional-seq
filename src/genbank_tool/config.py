@@ -4,7 +4,7 @@ import json
 import os
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Dict, Optional, Any
+from typing import Dict, Any, Optional
 
 
 @dataclass

@@ -2,6 +2,7 @@
 
 import sys
 import json
+import re
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -18,7 +19,7 @@ from PyQt5.QtWidgets import (
     QLabel, QProgressBar, QFileDialog, QMessageBox,
     QSplitter, QGroupBox, QTabWidget, QToolBar,
     QAction, QMenuBar, QMenu, QStatusBar, QHeaderView,
-    QCheckBox, QSpinBox, QComboBox, QLineEdit
+    QCheckBox, QSpinBox, QComboBox, QLineEdit, QApplication
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer, QSettings
 from PyQt5.QtGui import QIcon, QFont, QDragEnterEvent, QDropEvent
@@ -506,7 +507,6 @@ class GenBankToolGUI(QMainWindow):
     
     def _simple_markdown_to_html(self, markdown_text: str) -> str:
         """Simple markdown to HTML conversion for basic formatting."""
-        import re
         
         html = markdown_text
         
@@ -898,5 +898,4 @@ def main():
 
 
 if __name__ == '__main__':
-    from PyQt5.QtWidgets import QApplication
     main()
