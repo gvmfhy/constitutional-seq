@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "constitutional-seq"
 version = "1.0.0"
-description = "Principle-based canonical sequence retrieval for mRNA therapeutics"
+description = "Automated NCBI GenBank CDS retrieval tool for mRNA therapeutic development"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
