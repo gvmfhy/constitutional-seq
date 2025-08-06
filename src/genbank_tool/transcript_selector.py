@@ -20,8 +20,7 @@ class SelectionMethod(Enum):
     MANE_SELECT = "MANE Select"
     MANE_PLUS_CLINICAL = "MANE Plus Clinical"
     REFSEQ_SELECT = "RefSeq Select"
-    UNIPROT_CANONICAL = "UniProt Canonical"
-    LONGEST_CDS = "Longest CDS"
+    LONGEST_CDS = "Longest CDS (Arbitrary)"
     MOST_RECENT_VERSION = "Most Recent Version"
     USER_OVERRIDE = "User Override"
     DEFAULT = "Default (First Available)"
@@ -173,21 +172,9 @@ class TranscriptSelector:
                 alternatives_count=len(transcripts) - 1
             )
         
-        # 4. Check UniProt canonical (simplified to longest ATG transcript)
-        if self.uniprot_enabled:
-            uniprot_canonical = self._find_uniprot_canonical(
-                transcripts, gene_symbol, gene_id
-            )
-            if uniprot_canonical:
-                logger.info(f"Found UniProt canonical proxy: {uniprot_canonical.full_accession}")
-                return TranscriptSelection(
-                    transcript=uniprot_canonical,
-                    method=SelectionMethod.UNIPROT_CANONICAL,
-                    confidence=0.75,  # Lower confidence since this is a proxy method
-                    rationale="Longest ATG-starting transcript (UniProt canonical proxy)",
-                    warnings=warnings + ["Using simplified UniProt canonical detection"],
-                    alternatives_count=len(transcripts) - 1
-                )
+        # 4. Skip UniProt canonical check - removed due to unreliable proxy method
+        # The "longest ATG transcript" heuristic has no scientific basis for canonical selection
+        # Better to proceed directly to longest CDS as an explicit algorithmic choice
         
         # 5. Select longest CDS (with preference for ATG start)
         if self.prefer_longest:
@@ -244,13 +231,13 @@ class TranscriptSelector:
                     )
                 
                 # Confidence based on whether it has standard start codon
-                confidence = 0.70 if self._has_standard_start_codon(longest) else 0.60
+                confidence = 0.50 if self._has_standard_start_codon(longest) else 0.40
                 return TranscriptSelection(
                     transcript=longest,
                     method=SelectionMethod.LONGEST_CDS,
                     confidence=confidence,
-                    rationale=f"Longest CDS ({longest.cds_length} bp) - algorithmic selection",
-                    warnings=warnings,
+                    rationale=f"Longest CDS ({longest.cds_length} bp) - arbitrary algorithmic fallback, no biological basis",
+                    warnings=warnings + ["No curated transcript found; using arbitrary length-based selection"],
                     alternatives_count=len(transcripts) - 1
                 )
         
