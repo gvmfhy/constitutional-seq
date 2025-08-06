@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import (
     QLabel, QProgressBar, QFileDialog, QMessageBox,
     QSplitter, QGroupBox, QTabWidget, QToolBar,
     QAction, QMenuBar, QMenu, QStatusBar, QHeaderView,
-    QCheckBox, QSpinBox, QComboBox, QLineEdit, QApplication
+    QCheckBox, QSpinBox, QComboBox, QLineEdit, QApplication, QPlainTextEdit
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer, QSettings
 from PyQt5.QtGui import QIcon, QFont, QDragEnterEvent, QDropEvent
@@ -335,7 +335,7 @@ class GenBankToolGUI(QMainWindow):
         self.results_tabs.addTab(self.results_table, "Results Table")
         
         # Sequence viewer
-        self.sequence_viewer = QTextEdit()
+        self.sequence_viewer = QPlainTextEdit()
         self.sequence_viewer.setReadOnly(True)
         self.sequence_viewer.setFont(QFont("Courier", 10))
         self.results_tabs.addTab(self.sequence_viewer, "Sequence Viewer")
