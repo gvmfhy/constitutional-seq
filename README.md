@@ -8,8 +8,12 @@ Automated tool for retrieving Coding DNA Sequences (CDS) from NCBI GenBank for m
 
 - Intelligent gene name resolution handling aliases and synonyms
 - Automated retrieval of CDS sequences from NCBI RefSeq
-- Hierarchical transcript selection: MANE Select > MANE Plus Clinical > RefSeq Select > Longest CDS
-- Note: UniProt canonical detection simplified to longest ATG-starting transcript (proxy method)
+- Hierarchical transcript selection:
+  1. **MANE Select** (confidence 1.0) - Gold standard for ~19,000 human genes
+  2. **MANE Plus Clinical** (0.98) - Clinically relevant variants
+  3. **RefSeq Select** (0.95) - NCBI curated representative
+  4. **Longest ATG-starting CDS** (0.75) - Fallback heuristic
+- **Known limitation**: UniProt canonical detection was simplified to "longest ATG transcript" proxy due to unreliable protein-to-mRNA mapping. This affects only genes without MANE/RefSeq Select annotations.
 - Excel-compatible output format with multiple file format support
 - Comprehensive audit trails for reproducibility
 - **NEW: Advanced error handling and recovery**
