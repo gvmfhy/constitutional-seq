@@ -157,6 +157,9 @@ class GenBankToolGUI(QMainWindow):
         self.setWindowTitle("GenBank CDS Retrieval Tool")
         self.setGeometry(100, 100, 1200, 800)
         
+        # Apply dark theme
+        self.apply_dark_theme()
+        
         # Create central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -296,27 +299,8 @@ class GenBankToolGUI(QMainWindow):
         
         # Add prominent Process Genes button
         self.process_button = QPushButton("🧬 Process Genes")
+        self.process_button.setObjectName("processButton")  # For dark theme styling
         self.process_button.clicked.connect(self.process_genes)
-        self.process_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2E7D32;
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #388E3C;
-            }
-            QPushButton:pressed {
-                background-color: #1B5E20;
-            }
-            QPushButton:disabled {
-                background-color: #CCCCCC;
-                color: #666666;
-            }
-        """)
         self.process_button.setToolTip("Process the genes listed above to retrieve their CDS sequences")
         layout.addWidget(self.process_button)
         
@@ -898,6 +882,317 @@ class GenBankToolGUI(QMainWindow):
         
         # Other settings
         # UniProt First checkbox removed - HGNC handles all resolution
+    
+    def apply_dark_theme(self):
+        """Apply a sleek dark theme to the application."""
+        dark_stylesheet = """
+        /* Main Application */
+        QMainWindow {
+            background-color: #1e1e1e;
+        }
+        
+        QWidget {
+            background-color: #2b2b2b;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 13px;
+        }
+        
+        /* Group Boxes */
+        QGroupBox {
+            background-color: #2b2b2b;
+            border: 1px solid #3c3c3c;
+            border-radius: 6px;
+            margin-top: 8px;
+            padding-top: 8px;
+            font-weight: bold;
+        }
+        
+        QGroupBox::title {
+            color: #4fc3f7;
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 5px 0 5px;
+        }
+        
+        /* Text Input Areas */
+        QTextEdit, QTextBrowser, QPlainTextEdit {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            padding: 5px;
+            selection-background-color: #264f78;
+        }
+        
+        QLineEdit {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            padding: 5px;
+            selection-background-color: #264f78;
+        }
+        
+        /* Tables */
+        QTableWidget {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3c3c3c;
+            gridline-color: #3c3c3c;
+            selection-background-color: #264f78;
+        }
+        
+        QTableWidget::item {
+            padding: 5px;
+            border: none;
+        }
+        
+        QTableWidget::item:selected {
+            background-color: #264f78;
+            color: #ffffff;
+        }
+        
+        QHeaderView::section {
+            background-color: #2b2b2b;
+            color: #4fc3f7;
+            padding: 6px;
+            border: 1px solid #3c3c3c;
+            font-weight: bold;
+        }
+        
+        /* Buttons */
+        QPushButton {
+            background-color: #3c3c3c;
+            color: #e0e0e0;
+            border: 1px solid #4c4c4c;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-weight: bold;
+        }
+        
+        QPushButton:hover {
+            background-color: #4c4c4c;
+            border: 1px solid #5c5c5c;
+        }
+        
+        QPushButton:pressed {
+            background-color: #2c2c2c;
+        }
+        
+        QPushButton:disabled {
+            background-color: #2b2b2b;
+            color: #6c6c6c;
+            border: 1px solid #3c3c3c;
+        }
+        
+        /* Special Process Button (keep green) */
+        QPushButton#processButton {
+            background-color: #2E7D32;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px;
+        }
+        
+        QPushButton#processButton:hover {
+            background-color: #388E3C;
+        }
+        
+        QPushButton#processButton:pressed {
+            background-color: #1B5E20;
+        }
+        
+        /* Tabs */
+        QTabWidget::pane {
+            background-color: #2b2b2b;
+            border: 1px solid #3c3c3c;
+        }
+        
+        QTabBar::tab {
+            background-color: #2b2b2b;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            margin-right: 2px;
+            border: 1px solid #3c3c3c;
+            border-bottom: none;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+        
+        QTabBar::tab:selected {
+            background-color: #3c3c3c;
+            color: #4fc3f7;
+        }
+        
+        QTabBar::tab:hover {
+            background-color: #3c3c3c;
+        }
+        
+        /* Progress Bar */
+        QProgressBar {
+            background-color: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            text-align: center;
+            color: #e0e0e0;
+        }
+        
+        QProgressBar::chunk {
+            background-color: #4fc3f7;
+            border-radius: 3px;
+        }
+        
+        /* Menu Bar */
+        QMenuBar {
+            background-color: #2b2b2b;
+            color: #e0e0e0;
+            border-bottom: 1px solid #3c3c3c;
+        }
+        
+        QMenuBar::item:selected {
+            background-color: #3c3c3c;
+        }
+        
+        QMenu {
+            background-color: #2b2b2b;
+            color: #e0e0e0;
+            border: 1px solid #3c3c3c;
+        }
+        
+        QMenu::item:selected {
+            background-color: #264f78;
+        }
+        
+        /* Tool Bar */
+        QToolBar {
+            background-color: #2b2b2b;
+            border: none;
+            spacing: 3px;
+            padding: 3px;
+        }
+        
+        QToolButton {
+            background-color: transparent;
+            color: #e0e0e0;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            padding: 4px;
+        }
+        
+        QToolButton:hover {
+            background-color: #3c3c3c;
+            border: 1px solid #4c4c4c;
+        }
+        
+        /* Status Bar */
+        QStatusBar {
+            background-color: #2b2b2b;
+            color: #e0e0e0;
+            border-top: 1px solid #3c3c3c;
+        }
+        
+        /* Scroll Bars */
+        QScrollBar:vertical {
+            background-color: #1e1e1e;
+            width: 12px;
+            border: none;
+        }
+        
+        QScrollBar::handle:vertical {
+            background-color: #4c4c4c;
+            border-radius: 6px;
+            min-height: 20px;
+        }
+        
+        QScrollBar::handle:vertical:hover {
+            background-color: #5c5c5c;
+        }
+        
+        QScrollBar:horizontal {
+            background-color: #1e1e1e;
+            height: 12px;
+            border: none;
+        }
+        
+        QScrollBar::handle:horizontal {
+            background-color: #4c4c4c;
+            border-radius: 6px;
+            min-width: 20px;
+        }
+        
+        QScrollBar::handle:horizontal:hover {
+            background-color: #5c5c5c;
+        }
+        
+        QScrollBar::add-line, QScrollBar::sub-line {
+            border: none;
+            background: none;
+        }
+        
+        /* Splitters */
+        QSplitter::handle {
+            background-color: #3c3c3c;
+        }
+        
+        QSplitter::handle:hover {
+            background-color: #4fc3f7;
+        }
+        
+        /* CheckBox */
+        QCheckBox {
+            color: #e0e0e0;
+            spacing: 5px;
+        }
+        
+        QCheckBox::indicator {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #4c4c4c;
+            border-radius: 3px;
+            background-color: #1e1e1e;
+        }
+        
+        QCheckBox::indicator:checked {
+            background-color: #4fc3f7;
+            border: 1px solid #4fc3f7;
+        }
+        
+        /* SpinBox */
+        QSpinBox {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            padding: 3px;
+        }
+        
+        QSpinBox::up-button, QSpinBox::down-button {
+            background-color: #3c3c3c;
+            border: none;
+            width: 16px;
+        }
+        
+        QSpinBox::up-button:hover, QSpinBox::down-button:hover {
+            background-color: #4c4c4c;
+        }
+        
+        /* Labels */
+        QLabel {
+            color: #e0e0e0;
+        }
+        
+        /* Tooltips */
+        QToolTip {
+            background-color: #3c3c3c;
+            color: #e0e0e0;
+            border: 1px solid #4c4c4c;
+            border-radius: 4px;
+            padding: 4px;
+        }
+        """
+        
+        self.setStyleSheet(dark_stylesheet)
     
     def closeEvent(self, event):
         """Save settings on close."""
