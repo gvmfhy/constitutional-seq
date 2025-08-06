@@ -840,26 +840,34 @@ class GenBankToolGUI(QMainWindow):
             sequence = result['sequence']
             formatted = '\n'.join([sequence[i:i+60] for i in range(0, len(sequence), 60)])
             
-            info = f">{result['accession']}.{result['version']} {result['official_symbol']}\n"
-            info += f"Full Name: {result.get('full_gene_name', 'N/A')}\n"
-            info += f"Gene ID: {result['gene_id']}\n"
+            # Build info text without extra spaces that break copy-paste
+            info_lines = [
+                f">{result['accession']}.{result['version']} {result['official_symbol']}",
+                f"Full Name: {result.get('full_gene_name', 'N/A')}",
+                f"Gene ID: {result['gene_id']}"
+            ]
             
-            # Make URLs clickable using HTML
             if result.get('gene_url'):
-                info += f"Gene URL: <a href='{result['gene_url']}'>{result['gene_url']}</a>\n"
+                info_lines.append(f"Gene URL: {result['gene_url']}")
             if result.get('url'):
-                info += f"GenBank URL: <a href='{result['url']}'>{result['url']}</a>\n"
+                info_lines.append(f"GenBank URL: {result['url']}")
             
             if result.get('isoform'):
-                info += f"Isoform: {result['isoform']}\n"
-            info += f"Length: {len(sequence)} bp\n"
-            info += f"Selection: {result['selection_method']} (confidence: {result['confidence']:.2f})\n"
-            if result.get('warnings'):
-                info += f"Warnings: {', '.join(result['warnings'])}\n"
-            info += f"\n{formatted}"
+                info_lines.append(f"Isoform: {result['isoform']}")
             
-            # Use setHtml for clickable links
-            self.sequence_viewer.setHtml(f"<pre>{info}</pre>")
+            info_lines.extend([
+                f"Length: {len(sequence)} bp",
+                f"Selection: {result['selection_method']} (confidence: {result['confidence']:.2f})"
+            ])
+            
+            if result.get('warnings'):
+                info_lines.append(f"Warnings: {', '.join(result['warnings'])}")
+            
+            # Combine all info with proper newlines, then add sequence
+            full_text = '\n'.join(info_lines) + '\n\n' + formatted
+            
+            # Use setPlainText for clean copy-paste behavior
+            self.sequence_viewer.setPlainText(full_text)
     
     def save_results(self):
         """Save results to file."""

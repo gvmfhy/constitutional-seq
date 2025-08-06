@@ -36,7 +36,7 @@ When multiple transcript variants exist, the tool applies this evidence-based se
 | 5 | Longest CDS | 0.70 | Size-based heuristic |
 | 6 | First available | 0.40 | Emergency fallback (requires review) |
 
-**Confidence scores ≥0.90 are therapeutic-grade.** Lower scores indicate manual validation is recommended.
+**Higher confidence scores indicate stronger database support.** Lower scores suggest additional validation may be beneficial.
 
 ## Scientific Background
 
