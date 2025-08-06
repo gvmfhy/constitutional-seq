@@ -626,19 +626,33 @@ class GenBankToolGUI(QMainWindow):
     def create_status_panel(self) -> QWidget:
         """Create the status panel."""
         panel = QWidget()
-        panel.setMaximumHeight(40)  # Limit height to reduce wasted space
-        layout = QHBoxLayout(panel)  # Use horizontal layout for compactness
+        panel.setMaximumHeight(60)  # Slightly taller to accommodate link
+        layout = QVBoxLayout(panel)  # Vertical layout for progress bar and link
         layout.setContentsMargins(10, 5, 10, 5)  # Reduce margins
+        
+        # Top row: Status and progress bar
+        top_row = QWidget()
+        top_layout = QHBoxLayout(top_row)
+        top_layout.setContentsMargins(0, 0, 0, 0)
         
         # Status label
         self.status_label = QLabel("Ready to process genes")
         self.status_label.setMinimumWidth(200)
-        layout.addWidget(self.status_label)
+        top_layout.addWidget(self.status_label)
         
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setMaximumHeight(20)  # Make progress bar thinner
-        layout.addWidget(self.progress_bar, 1)  # Stretch to fill available space
+        top_layout.addWidget(self.progress_bar, 1)  # Stretch to fill available space
+        
+        layout.addWidget(top_row)
+        
+        # Bottom row: AI Safety link
+        link_label = QLabel('<a href="https://www.aisafetybook.com/" style="color: #4fc3f7; text-decoration: none;">📚 Interested in AI safety? Check out The AI Safety Book</a>')
+        link_label.setOpenExternalLinks(True)  # Enable clicking to open in browser
+        link_label.setStyleSheet("QLabel { font-size: 11px; color: #b0b0b0; }")
+        link_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(link_label)
         
         return panel
     
