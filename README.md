@@ -1,4 +1,6 @@
-# NCBI GenBank CDS Retrieval Tool
+# Constitutional.seq
+
+Principle-based canonical sequence retrieval for mRNA therapeutics. An AI-safety inspired approach to biological sequence selection.
 
 Automated tool for retrieving Coding DNA Sequences (CDS) from NCBI GenBank for mRNA therapeutic development workflows.
 

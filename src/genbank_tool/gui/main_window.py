@@ -1,8 +1,11 @@
-"""Main window for GenBank Tool GUI.
+"""Constitutional.seq - Principle-based canonical sequence selection.
 
 This tool was developed through AI-human collaboration using Claude Opus 4.
 The implementation demonstrates "vibe coding" - a fluid collaboration between
 human domain expertise and AI capabilities.
+
+The name "Constitutional.seq" reflects both Anthropic's Constitutional AI approach
+and the biological concept of essential, foundational sequences.
 """
 
 import sys
@@ -159,7 +162,7 @@ class GenBankToolGUI(QMainWindow):
     
     def init_ui(self):
         """Initialize the user interface."""
-        self.setWindowTitle("GenBank CDS Retrieval Tool")
+        self.setWindowTitle("Constitutional.seq")
         self.setGeometry(100, 100, 1200, 800)
         
         # Apply dark theme

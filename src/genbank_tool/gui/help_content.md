@@ -1,8 +1,8 @@
-# 🧬 GenBank CDS Retrieval Tool
+# 🧬 Constitutional.seq
 
 ## What This Tool Does
 
-This tool automates the retrieval of canonical coding sequences (CDS) from NCBI GenBank for mRNA therapeutic development. It resolves any gene name format to its official symbol, identifies the most therapeutically relevant transcript, and returns the complete CDS sequence ready for synthesis.
+**Constitutional.seq** applies principle-based selection to retrieve canonical coding sequences (CDS) from NCBI GenBank for mRNA therapeutic development. It resolves any gene name format to its official symbol, identifies the most therapeutically relevant transcript, and returns the complete CDS sequence ready for synthesis.
 
 ## Quick Start Guide
 
@@ -73,6 +73,7 @@ When multiple transcript variants exist, the tool applies this evidence-based se
 
 ## About This Tool
 
+**Constitutional.seq**  
 **Developed by:** Austin P. Morrissey  
 **Date:** August 6, 2025  
 **License:** MIT - Please use however you'd like
