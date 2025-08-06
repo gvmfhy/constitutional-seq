@@ -8,12 +8,7 @@ Automated tool for retrieving Coding DNA Sequences (CDS) from NCBI GenBank for m
 
 - Intelligent gene name resolution handling aliases and synonyms
 - Automated retrieval of CDS sequences from NCBI RefSeq
-- Hierarchical transcript selection:
-  1. **MANE Select** (confidence 1.0) - Gold standard for ~19,000 human genes
-  2. **MANE Plus Clinical** (0.98) - Clinically relevant variants
-  3. **RefSeq Select** (0.95) - NCBI curated representative
-  4. **Longest CDS** (0.50) - Arbitrary fallback when no curated transcript exists
-- **Known limitation**: UniProt canonical detection removed due to unreliable protein-to-mRNA mapping. For genes without MANE/RefSeq annotations, the tool falls back to arbitrary length-based selection with appropriate low confidence scores.
+- Science-based hierarchical transcript selection (see below)
 - Excel-compatible output format with multiple file format support
 - Comprehensive audit trails for reproducibility
 - **NEW: Advanced error handling and recovery**
@@ -112,6 +107,62 @@ genbank-tool genes.txt output.tsv --verbose --log-level DEBUG
 ```
 
 See [Error Handling Documentation](docs/error_handling.md) for comprehensive recovery features.
+
+## Scientific Approach: How Constitutional.seq Works
+
+### 1. Gene Name Resolution (HGNC)
+The tool first resolves your gene name using **HGNC (HUGO Gene Nomenclature Committee)**, the international authority for human gene naming:
+- Handles common aliases (e.g., "VEGF" → "VEGFA", "p53" → "TP53")  
+- Resolves outdated gene symbols to current approved names
+- Returns the official NCBI Gene ID for database queries
+
+### 2. Transcript Retrieval
+Using the NCBI Gene ID, the tool queries RefSeq to retrieve all transcript variants:
+- Fetches all NM_ (mRNA) and NR_ (non-coding RNA) sequences
+- Extracts CDS (Coding DNA Sequence) regions
+- Validates sequences have proper structure (start/stop codons)
+
+### 3. Canonical Transcript Selection
+The tool uses a hierarchical approach based on scientific consensus:
+
+#### **MANE Select (confidence: 1.0)**
+- **What it is**: Matched Annotation from NCBI and EMBL-EBI - a joint project between RefSeq and Ensembl
+- **Why it matters**: Represents the scientific community's consensus on the most biologically relevant transcript
+- **Coverage**: Available for ~19,000 human protein-coding genes
+- **Selection criteria**: Based on conservation, expression, clinical relevance, and protein length
+
+#### **MANE Plus Clinical (confidence: 0.98)**  
+- **What it is**: Additional MANE transcripts with demonstrated clinical importance
+- **Why it matters**: Some genes have multiple clinically relevant isoforms (e.g., different tissues)
+- **Example**: Genes with tissue-specific isoforms important for disease
+
+#### **RefSeq Select (confidence: 0.95)**
+- **What it is**: NCBI's computationally selected representative transcript
+- **Why it matters**: Provides coverage for genes without MANE curation
+- **Selection criteria**: Algorithm considers expression data, conservation, and annotations
+
+#### **Longest CDS (confidence: 0.50)**
+- **What it is**: Fallback selection of the transcript with the longest coding sequence
+- **Why it matters**: When no curated data exists, provides a reproducible (though arbitrary) choice
+- **Warning**: This is NOT biologically meaningful - just ensures you get *something*
+
+### 4. Output Generation
+The tool provides comprehensive information for each gene:
+- Selected transcript accession and version
+- Complete CDS sequence (5' → 3')
+- Confidence score and selection method
+- Warnings about non-standard features (e.g., non-ATG starts)
+- Alternative transcripts count for awareness
+
+### Why This Hierarchy?
+1. **MANE transcripts** represent years of manual curation and international consensus
+2. **RefSeq Select** uses NCBI's computational expertise when manual curation isn't available
+3. **Length-based fallback** is clearly marked as arbitrary (0.50 confidence) to prevent misuse
+
+### Known Limitations
+- **No UniProt canonical**: We removed UniProt canonical detection because protein→mRNA mapping is unreliable and introduces errors
+- **Non-ATG starts**: Some valid transcripts use alternative start codons (clearly flagged in output)
+- **Incomplete MANE coverage**: ~30% of human genes lack MANE annotation (as of 2024)
 
 ### CLI Versions
 
