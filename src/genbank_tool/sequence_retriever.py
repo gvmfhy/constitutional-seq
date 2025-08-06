@@ -70,7 +70,12 @@ class SequenceRetriever:
         
         # Initialize transcript selector if enabled
         if self.enable_selection:
-            self.selector = TranscriptSelector(uniprot_enabled=True, prefer_longest=True)
+            self.selector = TranscriptSelector(
+                uniprot_enabled=True, 
+                prefer_longest=True,
+                mane_enabled=True,
+                api_key=api_key
+            )
     
     def _rate_limit(self) -> None:
         """Enforce rate limiting between requests."""

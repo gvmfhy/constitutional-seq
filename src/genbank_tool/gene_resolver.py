@@ -13,6 +13,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from .hgnc_resolver import HGNCResolver
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,20 +43,25 @@ class GeneResolver:
     CONFIDENCE_THRESHOLD = 0.8  # Threshold for triggering UniProt fallback (increased for better accuracy)
     
     def __init__(self, api_key: Optional[str] = None, cache_enabled: bool = True, 
-                 uniprot_first: bool = False):
+                 uniprot_first: bool = False, hgnc_enabled: bool = True):
         """Initialize the gene resolver.
         
         Args:
             api_key: Optional NCBI API key for increased rate limits
             cache_enabled: Whether to use local caching
             uniprot_first: Whether to search UniProt before NCBI
+            hgnc_enabled: Whether to use HGNC for primary resolution (recommended)
         """
         self.api_key = api_key
         self.cache_enabled = cache_enabled
         self.uniprot_first = uniprot_first
+        self.hgnc_enabled = hgnc_enabled
         
         if self.cache_enabled:
             self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize HGNC resolver if enabled
+        self.hgnc_resolver = HGNCResolver(cache_enabled=cache_enabled) if hgnc_enabled else None
         
         # Setup session with retry logic
         self.session = requests.Session()
@@ -96,11 +103,39 @@ class GeneResolver:
         
         # Common formatting issues
         normalized = normalized.replace('_', '')
-        normalized = normalized.replace('-', '')
         
-        # Handle common variations (but preserve original for search)
-        # We'll search with both original and normalized
+        # For interleukins and similar, create versions with and without hyphens
+        # e.g., "IL-2" -> try both "IL-2" and "IL2"
+        # Don't remove hyphens globally as some genes need them
+        
         return normalized
+    
+    def _get_name_variants(self, name: str) -> List[str]:
+        """Get variants of a gene name to try.
+        
+        For names with hyphens, try both with and without.
+        
+        Args:
+            name: Gene name
+            
+        Returns:
+            List of name variants to try
+        """
+        variants = [name]
+        
+        # If contains hyphen, also try without
+        if '-' in name:
+            variants.append(name.replace('-', ''))
+        
+        # If starts with IL, CD, HLA, etc. and has no hyphen, try with hyphen
+        prefixes = ['IL', 'CD', 'HLA', 'CCL', 'CXCL', 'CCR', 'CXCR']
+        for prefix in prefixes:
+            if name.upper().startswith(prefix) and len(name) > len(prefix):
+                suffix = name[len(prefix):]
+                if suffix[0].isdigit() and '-' not in name:
+                    variants.append(f"{name[:len(prefix)]}-{suffix}")
+        
+        return variants
     
     def _get_cache_path(self, query: str) -> Path:
         """Get cache file path for a query."""
@@ -407,7 +442,10 @@ class GeneResolver:
     def resolve(self, gene_name: str) -> Optional[ResolvedGene]:
         """Resolve a single gene name to its official symbol.
         
-        Uses NCBI Gene as primary source, falls back to UniProt if needed.
+        Resolution hierarchy:
+        1. HGNC (authoritative for human gene names)
+        2. NCBI Gene or UniProt (based on configuration)
+        3. Fallback strategies
         
         Args:
             gene_name: Gene name to resolve
@@ -417,6 +455,22 @@ class GeneResolver:
         """
         logger.info(f"Resolving gene: {gene_name}")
         
+        # Try HGNC first if enabled (recommended)
+        if self.hgnc_enabled and self.hgnc_resolver:
+            hgnc_result = self._resolve_via_hgnc(gene_name)
+            if hgnc_result and hgnc_result.confidence >= 0.9:
+                logger.info(f"HGNC resolved {gene_name} -> {hgnc_result.official_symbol} (Gene ID: {hgnc_result.gene_id})")
+                return hgnc_result
+            
+            # If HGNC partially resolved but no Gene ID, try to get it from NCBI
+            if hgnc_result and not hgnc_result.gene_id:
+                logger.info(f"HGNC found {hgnc_result.official_symbol} but no Gene ID, checking NCBI")
+                ncbi_result = self._resolve_via_ncbi(hgnc_result.official_symbol)
+                if ncbi_result:
+                    hgnc_result.gene_id = ncbi_result.gene_id
+                    return hgnc_result
+        
+        # If HGNC didn't work or is disabled, fall back to original logic
         if self.uniprot_first:
             # Try UniProt first
             logger.info(f"Using UniProt-first strategy for {gene_name}")
@@ -477,6 +531,38 @@ class GeneResolver:
             else:
                 logger.warning(f"No confident match found for gene: {gene_name}")
                 return None
+    
+    def _resolve_via_hgnc(self, gene_name: str) -> Optional[ResolvedGene]:
+        """Resolve gene using HGNC (HUGO Gene Nomenclature Committee).
+        
+        HGNC is authoritative for human gene symbols and handles aliases well.
+        
+        Args:
+            gene_name: Gene name to resolve
+            
+        Returns:
+            ResolvedGene object or None
+        """
+        if not self.hgnc_resolver:
+            return None
+        
+        # Try with name variants (with/without hyphens)
+        for variant in self._get_name_variants(gene_name):
+            hgnc_gene = self.hgnc_resolver.resolve(variant)
+            
+            if hgnc_gene:
+                # Build ResolvedGene from HGNC data
+                return ResolvedGene(
+                    input_name=gene_name,
+                    official_symbol=hgnc_gene.symbol,
+                    gene_id=hgnc_gene.entrez_id or '',
+                    description=hgnc_gene.name,
+                    aliases=hgnc_gene.all_symbols,
+                    confidence=1.0,  # HGNC is authoritative
+                    source="HGNC"
+                )
+        
+        return None
     
     def _resolve_via_ncbi(self, gene_name: str) -> Optional[ResolvedGene]:
         """Resolve gene name using NCBI Gene database.

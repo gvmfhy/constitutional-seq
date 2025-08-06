@@ -8,6 +8,8 @@ from typing import Dict, List, Optional, Tuple
 import requests
 
 from .models import RetrievedSequence
+from .mane_selector import MANESelector, MANETranscript
+from .mane_database import MANEDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +17,8 @@ logger = logging.getLogger(__name__)
 class SelectionMethod(Enum):
     """Methods used for transcript selection."""
     
+    MANE_SELECT = "MANE Select"
+    MANE_PLUS_CLINICAL = "MANE Plus Clinical"
     REFSEQ_SELECT = "RefSeq Select"
     UNIPROT_CANONICAL = "UniProt Canonical"
     LONGEST_CDS = "Longest CDS"
@@ -40,15 +44,23 @@ class TranscriptSelector:
     
     UNIPROT_BASE_URL = "https://rest.uniprot.org/uniprotkb"
     
-    def __init__(self, uniprot_enabled: bool = True, prefer_longest: bool = True):
+    def __init__(self, uniprot_enabled: bool = True, prefer_longest: bool = True, 
+                 mane_enabled: bool = True, api_key: Optional[str] = None):
         """Initialize the transcript selector.
         
         Args:
             uniprot_enabled: Whether to use UniProt for canonical validation
             prefer_longest: Whether to prefer longest CDS when other criteria equal
+            mane_enabled: Whether to use MANE Select (highest priority)
+            api_key: NCBI API key for MANE queries
         """
         self.uniprot_enabled = uniprot_enabled
         self.prefer_longest = prefer_longest
+        self.mane_enabled = mane_enabled
+        
+        # Initialize MANE selector and database if enabled
+        self.mane_selector = MANESelector(api_key=api_key) if mane_enabled else None
+        self.mane_database = MANEDatabase() if mane_enabled else None
         
         # Setup session for API requests
         self.session = requests.Session()
@@ -67,10 +79,12 @@ class TranscriptSelector:
         
         Uses hierarchical selection:
         1. User override (if provided)
-        2. RefSeq Select designation
-        3. UniProt canonical annotation
-        4. Longest CDS
-        5. Most recent version
+        2. MANE Select (highest confidence)
+        3. MANE Plus Clinical
+        4. RefSeq Select designation
+        5. UniProt canonical annotation
+        6. Longest CDS
+        7. Most recent version
         
         Args:
             transcripts: List of transcript sequences
@@ -102,7 +116,51 @@ class TranscriptSelector:
             else:
                 warnings.append(f"User preference {user_preference} not found")
         
-        # 2. Check for RefSeq Select
+        # 2. Check for MANE Select (highest priority for therapeutic use)
+        if self.mane_enabled and self.mane_database:
+            # Try MANE Select first
+            mane_select = self.mane_database.get_mane_select(gene_symbol)
+            if mane_select:
+                # Find matching transcript in our list
+                mane_match = self._find_by_accession(
+                    transcripts, 
+                    mane_select['refseq'].split('.')[0]
+                )
+                if mane_match:
+                    logger.info(f"Found MANE Select transcript: {mane_match.full_accession}")
+                    return TranscriptSelection(
+                        transcript=mane_match,
+                        method=SelectionMethod.MANE_SELECT,
+                        confidence=1.0,
+                        rationale="MANE Select - NCBI/EBI consensus for therapeutic use",
+                        warnings=warnings,
+                        alternatives_count=len(transcripts) - 1
+                    )
+                else:
+                    warnings.append(f"MANE Select {mane_select['refseq']} not in retrieved set")
+            
+            # Try MANE Plus Clinical
+            mane_plus = self.mane_database.get_mane_plus_clinical(gene_symbol)
+            for mane_clinical in mane_plus:
+                mane_match = self._find_by_accession(
+                    transcripts,
+                    mane_clinical['refseq'].split('.')[0]
+                )
+                if mane_match:
+                    logger.info(f"Found MANE Plus Clinical transcript: {mane_match.full_accession}")
+                    return TranscriptSelection(
+                        transcript=mane_match,
+                        method=SelectionMethod.MANE_PLUS_CLINICAL,
+                        confidence=0.98,
+                        rationale="MANE Plus Clinical - Additional clinically relevant transcript",
+                        warnings=warnings,
+                        alternatives_count=len(transcripts) - 1
+                    )
+            
+            if mane_plus:
+                warnings.append(f"MANE Plus Clinical transcripts not in retrieved set")
+        
+        # 3. Check for RefSeq Select
         refseq_select = self._find_refseq_select(transcripts)
         if refseq_select:
             logger.info(f"Found RefSeq Select transcript: {refseq_select.full_accession}")
