@@ -142,10 +142,10 @@ The tool uses a hierarchical approach based on scientific consensus:
 - **Selection criteria**: Algorithm considers expression data, conservation, and annotations
 
 #### **UniProt Canonical (confidence: 0.85)**
-- **What it is**: UniProt's expertly curated canonical isoform
+- **What it is**: UniProt's expertly curated canonical isoform from 20,000+ human proteins
 - **Why it matters**: Based on proteomics evidence, structural data, and literature
-- **Coverage**: Built-in mappings for ~60 major therapeutic targets
-- **Note**: Uses curated static mappings to avoid unreliable API timeouts
+- **Current implementation**: Built-in mappings for ~60 major therapeutic targets
+- **Full coverage available**: Download UniProt ID mapping file (119MB) for 20,000+ genes via `--download-uniprot` flag
 
 #### **Longest CDS (confidence: 0.50)**
 - **What it is**: Fallback selection of the transcript with the longest coding sequence

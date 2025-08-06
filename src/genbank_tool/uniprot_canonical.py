@@ -1,7 +1,7 @@
 """UniProt canonical transcript mapping.
 
 This module provides mapping from genes to their UniProt canonical transcripts.
-Instead of unreliable live API calls, we use a curated mapping approach.
+Uses both built-in mappings and comprehensive UniProt ID mapping file.
 """
 
 import json
@@ -12,20 +12,45 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
+# Try to import the downloader for comprehensive coverage
+try:
+    from .uniprot_downloader import UniProtIDMapper
+    DOWNLOADER_AVAILABLE = True
+except ImportError:
+    DOWNLOADER_AVAILABLE = False
+    logger.debug("UniProt downloader not available, using built-in mappings only")
+
 
 class UniProtCanonicalMapper:
     """Maps genes to their UniProt canonical transcripts."""
     
-    def __init__(self, cache_dir: Optional[Path] = None):
+    def __init__(self, cache_dir: Optional[Path] = None, use_full_mapping: bool = True):
         """Initialize the UniProt canonical mapper.
         
         Args:
             cache_dir: Directory to store cached mappings
+            use_full_mapping: Whether to download/use full UniProt ID mapping file
         """
         self.cache_dir = cache_dir or Path.home() / ".genbank_cache" / "uniprot"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.cache_file = self.cache_dir / "canonical_mapping.json"
         self.mapping: Dict[str, str] = {}
+        self.id_mapper = None
+        
+        # Try to use comprehensive ID mapper if available and requested
+        if use_full_mapping and DOWNLOADER_AVAILABLE:
+            try:
+                self.id_mapper = UniProtIDMapper(cache_dir=self.cache_dir)
+                # This will load from cache or download if needed
+                full_mapping = self.id_mapper.update_and_get_mapping()
+                if full_mapping:
+                    self.mapping = full_mapping
+                    logger.info(f"Loaded comprehensive UniProt mapping: {len(self.mapping)} genes")
+                    return
+            except Exception as e:
+                logger.warning(f"Failed to load full UniProt mapping: {e}")
+        
+        # Fall back to built-in mappings
         self._load_mapping()
     
     def _load_mapping(self) -> None:
