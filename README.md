@@ -110,64 +110,91 @@ See [Error Handling Documentation](docs/error_handling.md) for comprehensive rec
 
 ## Scientific Approach: How Constitutional.seq Works
 
-### 1. Gene Name Resolution (HGNC)
-The tool first resolves your gene name using **HGNC (HUGO Gene Nomenclature Committee)**, the international authority for human gene naming:
-- Handles common aliases (e.g., "VEGF" → "VEGFA", "p53" → "TP53")  
-- Resolves outdated gene symbols to current approved names
-- Returns the official NCBI Gene ID for database queries
+### Data Flow Overview
 
-### 2. Transcript Retrieval
-Using the NCBI Gene ID, the tool queries RefSeq to retrieve all transcript variants:
-- Fetches all NM_ (mRNA) and NR_ (non-coding RNA) sequences
-- Extracts CDS (Coding DNA Sequence) regions
-- Validates sequences have proper structure (start/stop codons)
+The tool implements a four-stage pipeline that mirrors how a molecular biologist would manually select sequences, but with computational rigor and reproducibility. Each stage feeds precisely into the next, creating a chain of custody from user input to final CDS sequence.
 
-### 3. Canonical Transcript Selection
-The tool uses a hierarchical approach based on scientific consensus:
+### 1. Gene Name Resolution (HGNC Module)
 
-#### **MANE Select (confidence: 1.0)**
-- **What it is**: Matched Annotation from NCBI and EMBL-EBI - a joint project between RefSeq and Ensembl
-- **Why it matters**: Represents the scientific community's consensus on the most biologically relevant transcript
-- **Coverage**: Available for ~19,000 human protein-coding genes
-- **Selection criteria**: Based on conservation, expression, clinical relevance, and protein length
+**Purpose**: Transform any gene identifier into a standardized, unambiguous reference.
 
-#### **MANE Plus Clinical (confidence: 0.98)**  
-- **What it is**: Additional MANE transcripts with demonstrated clinical importance
-- **Why it matters**: Some genes have multiple clinically relevant isoforms (e.g., different tissues)
-- **Example**: Genes with tissue-specific isoforms important for disease
+When a user enters a gene name (like "p53", "VEGF", or even outdated symbols), the HGNC resolver acts as a universal translator. HGNC (HUGO Gene Nomenclature Committee) maintains the authoritative database of human gene names, serving as the Rosetta Stone of genomic nomenclature. This module queries HGNC's REST API to resolve aliases, deprecated symbols, and common misspellings into the official gene symbol and its corresponding NCBI Gene ID.
 
-#### **RefSeq Select (confidence: 0.95)**
-- **What it is**: NCBI's computationally selected representative transcript
-- **Why it matters**: Provides coverage for genes without MANE curation
-- **Selection criteria**: Algorithm considers expression data, conservation, and annotations
+**Why this matters**: Gene naming in scientific literature is chaotic. The same gene might be called "p53" in one paper, "TP53" in another, and "TRP53" in older literature. Without proper resolution, you might retrieve the wrong sequence or miss the gene entirely. The HGNC module ensures that regardless of what name you provide, you get the correct gene's sequences.
 
-#### **UniProt Canonical (confidence: 0.85)**
-- **What it is**: UniProt's expertly curated canonical isoform from 20,000+ human proteins
-- **Why it matters**: Based on proteomics evidence, structural data, and literature
-- **How it works**:
-  1. Downloads UniProt ID mapping file (119MB, one-time download)
-  2. Maps gene symbol → UniProt canonical protein (e.g., P53 → NP_000537)
-  3. Queries NCBI to map protein → mRNA (e.g., NP_000537 → NM_000546)
-  4. Returns the canonical mRNA transcript
-- **Coverage**: 32,000+ human genes when mapping file is downloaded (60 built-in for quick start)
+**Data passed to next stage**: Official gene symbol (e.g., "TP53") and NCBI Gene ID (e.g., "7157")
 
-#### **Longest CDS (confidence: 0.50)**
-- **What it is**: Fallback selection of the transcript with the longest coding sequence
-- **Why it matters**: When no curated data exists, provides a reproducible (though arbitrary) choice
-- **Warning**: This is NOT biologically meaningful - just ensures you get *something*
+### 2. Transcript Retrieval (NCBI Module)
 
-### 4. Output Generation
-The tool provides comprehensive information for each gene:
-- Selected transcript accession and version
-- Complete CDS sequence (5' → 3')
-- Confidence score and selection method
-- Warnings about non-standard features (e.g., non-ATG starts)
-- Alternative transcripts count for awareness
+**Purpose**: Collect all possible transcript variants for comprehensive selection.
 
-### Why This Hierarchy?
-1. **MANE transcripts** represent years of manual curation and international consensus
-2. **RefSeq Select** uses NCBI's computational expertise when manual curation isn't available
-3. **Length-based fallback** is clearly marked as arbitrary (0.50 confidence) to prevent misuse
+Armed with the NCBI Gene ID, this module queries the NCBI Entrez system to retrieve every RefSeq transcript associated with the gene. RefSeq is NCBI's curated collection of reference sequences, representing the gold standard for sequence data. The module fetches all mRNA transcripts (NM_ accessions) and extracts their coding sequences (CDS) - the actual DNA that gets translated into protein.
+
+**Why this matters**: Human genes typically produce multiple transcript variants through alternative splicing, alternative promoters, and other mechanisms. Some genes have over 20 variants. Each variant might produce a different protein isoform with distinct functions. For mRNA therapeutics, choosing the wrong variant could mean targeting the wrong biological pathway or tissue.
+
+**Data passed to next stage**: List of all transcript objects, each containing accession number, version, CDS sequence, CDS length, and metadata flags
+
+### 3. Canonical Transcript Selection (Hierarchical Selection Engine)
+
+**Purpose**: Apply scientific principles to select the most therapeutically relevant transcript.
+
+This is the heart of Constitutional.seq's scientific logic. Rather than arbitrarily picking a transcript, the tool implements a hierarchy based on international scientific consensus:
+
+#### **MANE Select (confidence: 1.0)** - The Gold Standard
+
+MANE (Matched Annotation from NCBI and EMBL-EBI) represents an unprecedented collaboration between the world's two major genomic databases. For each gene, expert curators from both institutions independently evaluate all transcripts, then meet to reach consensus on a single "Select" transcript. They consider evolutionary conservation across species, expression levels in healthy tissues, clinical relevance in disease databases, and protein domain completeness. When Constitutional.seq finds a MANE Select transcript, it's using the same sequence that clinical geneticists use for variant interpretation and that drug developers use for therapeutic design.
+
+**Coverage**: ~19,000 human protein-coding genes (about 95% of clinically relevant genes)
+
+#### **MANE Plus Clinical (confidence: 0.98)** - Clinically Critical Alternatives
+
+Some genes produce multiple isoforms that are each clinically important in different contexts. For example, the dystrophin gene produces a full-length protein in muscle but a shorter isoform in brain. MANE Plus Clinical captures these additional transcripts that, while not the primary "Select" choice, have documented clinical importance. Constitutional.seq checks these when the MANE Select transcript isn't available in the retrieved set.
+
+#### **RefSeq Select (confidence: 0.95)** - Computational Consensus
+
+For genes without MANE curation, NCBI provides RefSeq Select - their best computational prediction of the representative transcript. This algorithm integrates multiple data sources: RNA-seq expression data from the GTEx project, evolutionary conservation scores, UniProt annotations, and literature citations. While not manually curated, RefSeq Select benefits from NCBI's decades of experience in sequence analysis.
+
+#### **UniProt Canonical (confidence: 0.85)** - Protein-Centric Selection
+
+UniProt approaches the problem from the protein perspective. Their curators review experimental evidence from mass spectrometry, crystal structures, and functional studies to identify the canonical protein isoform. Constitutional.seq maps these protein selections back to their corresponding mRNA transcripts through a sophisticated pipeline:
+
+1. **Gene → Protein Mapping**: Downloads UniProt's ID mapping database (119MB) containing 32,000+ human genes
+2. **Protein Accession Retrieval**: Identifies the UniProt canonical protein (e.g., TP53 → NP_000537)
+3. **Protein → mRNA Reverse Mapping**: Queries NCBI's protein database to find the source mRNA
+4. **Validation**: Confirms the mRNA produces the expected protein sequence
+
+This protein-centric approach is particularly valuable for genes where protein function, rather than RNA expression, drives biological importance.
+
+#### **Longest CDS (confidence: 0.50)** - The Reproducible Fallback
+
+When all curated sources fail, the tool falls back to a simple heuristic: select the transcript with the longest coding sequence. **This is explicitly not a biological principle** - longer doesn't mean better in biology. Many important proteins are short, and many diseases result from inappropriately long isoforms. However, this fallback ensures reproducibility: given the same input, you'll always get the same output. The low confidence score (0.50) serves as a warning flag that manual review is essential.
+
+**Special consideration**: The tool preferentially selects transcripts starting with ATG (the standard start codon) over those with alternative start codons, even if slightly shorter, because non-ATG starts often indicate incomplete annotation or specialized regulation.
+
+### 4. Output Generation and Quality Control
+
+**Purpose**: Provide comprehensive, validated results with clear confidence indicators.
+
+The final stage packages the selected transcript with rich metadata that enables informed decision-making. Every result includes:
+
+- **The CDS sequence** in 5' → 3' orientation, ready for direct use in molecular biology applications
+- **Confidence score** (0.0-1.0) indicating the reliability of the selection
+- **Selection method** explicitly stating which criterion was used
+- **Warning flags** for potential issues (non-ATG starts, multiple equal-length variants, missing MANE despite gene importance)
+- **Alternatives count** showing how many other transcripts exist, prompting review for critical applications
+- **Full audit trail** documenting every API call and decision point for reproducibility
+
+### Scientific Rationale for the Hierarchy
+
+The selection hierarchy isn't arbitrary - it reflects how the scientific community establishes consensus:
+
+1. **International consensus first** (MANE): When major institutions agree, that agreement represents thousands of hours of expert analysis
+2. **Clinical evidence second** (MANE Plus Clinical): Real-world medical relevance trumps theoretical considerations
+3. **Computational prediction third** (RefSeq Select): Sophisticated algorithms can identify patterns humans might miss
+4. **Protein evidence fourth** (UniProt): Functional proteomics provides orthogonal validation of transcript importance
+5. **Reproducible fallback last** (Longest CDS): When no evidence exists, at least be consistent and transparent
+
+This hierarchy embodies the principle of "constitutional" selection - decisions based on established rules rather than arbitrary choices, with clear documentation when those rules must bend to practical necessity.
 
 ### Known Limitations
 - **UniProt requires download**: Full UniProt canonical coverage requires downloading 119MB mapping file

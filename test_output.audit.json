@@ -1,41 +1,34 @@
 {
-  "start_time": "2025-07-22 21:02:31.885629",
+  "start_time": "2025-08-06 18:25:08.774009",
   "entries": [
     {
-      "input_name": "BRCA1",
-      "timestamp": "2025-07-22T21:02:32.625132",
+      "input_name": "GBA",
+      "timestamp": "2025-08-06T18:25:10.036779",
       "success": true,
-      "selection_method": "Most Recent Version",
+      "selection_method": "MANE Select",
       "validation_status": null
     },
     {
-      "input_name": "EGFR",
-      "timestamp": "2025-07-22T21:02:32.625174",
-      "success": true,
-      "selection_method": "Longest CDS",
-      "validation_status": null
-    },
-    {
-      "input_name": "TP53",
-      "timestamp": "2025-07-22T21:02:32.625198",
-      "success": true,
-      "selection_method": "Most Recent Version",
+      "input_name": "CRISPR",
+      "timestamp": "2025-08-06T18:25:11.311744",
+      "success": false,
+      "selection_method": null,
       "validation_status": null
     }
   ],
   "statistics": {
-    "total_processed": 3,
-    "successful": 3,
-    "failed": 0,
-    "success_rate": "100.0%",
+    "total_processed": 2,
+    "successful": 1,
+    "failed": 1,
+    "success_rate": "50.0%",
     "selection_methods": {
-      "Most Recent Version": 2,
-      "Longest CDS": 1
+      "MANE Select": 1,
+      "null": 1
     },
     "validation_results": {
       "valid": 0,
       "invalid": 0,
-      "not_validated": 3
+      "not_validated": 2
     }
   },
   "database_versions": {
@@ -44,5 +37,5 @@
     "uniprot": "Current",
     "ensembl": "Current"
   },
-  "end_time": "2025-07-22 21:02:32.628364"
+  "end_time": "2025-08-06 18:25:11.313790"
 }
