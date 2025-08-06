@@ -172,7 +172,7 @@ The concept of canonical isoforms becomes further complicated when considering t
 
 ## ⚙️ Advanced Options
 
-**UniProt First:** Searches protein database before nucleotide database. Recommended for genes with complex naming (synonyms, historical names) or when protein function guides isoform selection.
+Currently, all advanced options are integrated into the automatic workflow. HGNC handles all gene name resolution, making the previous UniProt First option obsolete.
 
 ## 🎯 Case Study Examples
 

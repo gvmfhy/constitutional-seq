@@ -264,14 +264,7 @@ class GenBankToolGUI(QMainWindow):
         
         toolbar.addSeparator()
         
-        # UniProt-first checkbox - keeping this as it's a useful option
-        self.uniprot_first_checkbox = QCheckBox('UniProt First')
-        self.uniprot_first_checkbox.setToolTip(
-            'Search UniProt database first for gene resolution.\n'
-            'UniProt often has better gene name recognition\n'
-            'and more comprehensive protein information.'
-        )
-        toolbar.addWidget(self.uniprot_first_checkbox)
+        # Removed UniProt First toggle - HGNC now handles all name resolution
     
     def create_input_panel(self) -> QWidget:
         """Create the input panel."""
@@ -668,7 +661,7 @@ class GenBankToolGUI(QMainWindow):
             'use_cache': self.settings.value('use_cache', True),
             'canonical_only': True,  # Now always true by default
             'validate': True,  # Now always true by default
-            'uniprot_first': self.uniprot_first_checkbox.isChecked(),
+            'uniprot_first': False,  # Deprecated - HGNC handles resolution
             'workers': 5  # Fixed value for simplicity
         }
         
@@ -904,9 +897,7 @@ class GenBankToolGUI(QMainWindow):
             self.restoreGeometry(geometry)
         
         # Other settings
-        self.uniprot_first_checkbox.setChecked(
-            self.settings.value('uniprot_first', False, type=bool)
-        )
+        # UniProt First checkbox removed - HGNC handles all resolution
     
     def closeEvent(self, event):
         """Save settings on close."""
@@ -917,7 +908,7 @@ class GenBankToolGUI(QMainWindow):
         
         # Save settings
         self.settings.setValue('geometry', self.saveGeometry())
-        self.settings.setValue('uniprot_first', self.uniprot_first_checkbox.isChecked())
+        # UniProt First setting removed - HGNC handles all resolution
         
         event.accept()
 
