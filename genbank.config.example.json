@@ -1,0 +1,32 @@
+{
+  "cache": {
+    "enabled": true,
+    "directory": ".genbank_cache",
+    "gene_expiry_days": 30,
+    "sequence_expiry_days": 7,
+    "max_size_mb": 500
+  },
+  "api": {
+    "ncbi_api_key": "your_api_key_here",
+    "email": "your_email@example.com",
+    "retry_attempts": 3,
+    "timeout_seconds": 30,
+    "rate_limit_per_second": 3.0
+  },
+  "selection": {
+    "canonical_only": true,
+    "prefer_refseq_select": true,
+    "prefer_longest_cds": true,
+    "enable_uniprot": true
+  },
+  "validation": {
+    "enabled": false,
+    "strict_mode": false,
+    "cross_reference": true
+  },
+  "output": {
+    "format": "tsv",
+    "include_audit_trail": true,
+    "excel_compatible": true
+  }
+}

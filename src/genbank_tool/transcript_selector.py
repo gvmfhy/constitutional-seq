@@ -168,28 +168,28 @@ class TranscriptSelector:
                 transcript=refseq_select,
                 method=SelectionMethod.REFSEQ_SELECT,
                 confidence=0.95,
-                rationale="NCBI RefSeq Select designation (curated representative)",
+                rationale="NCBI RefSeq Select - manually curated representative transcript",
                 warnings=warnings,
                 alternatives_count=len(transcripts) - 1
             )
         
-        # 3. Check UniProt canonical
+        # 4. Check UniProt canonical (simplified to longest ATG transcript)
         if self.uniprot_enabled:
             uniprot_canonical = self._find_uniprot_canonical(
                 transcripts, gene_symbol, gene_id
             )
             if uniprot_canonical:
-                logger.info(f"Found UniProt canonical: {uniprot_canonical.full_accession}")
+                logger.info(f"Found UniProt canonical proxy: {uniprot_canonical.full_accession}")
                 return TranscriptSelection(
                     transcript=uniprot_canonical,
                     method=SelectionMethod.UNIPROT_CANONICAL,
-                    confidence=0.9,
-                    rationale="UniProt canonical transcript annotation",
-                    warnings=warnings,
+                    confidence=0.75,  # Lower confidence since this is a proxy method
+                    rationale="Longest ATG-starting transcript (UniProt canonical proxy)",
+                    warnings=warnings + ["Using simplified UniProt canonical detection"],
                     alternatives_count=len(transcripts) - 1
                 )
         
-        # 4. Select longest CDS (with preference for ATG start)
+        # 5. Select longest CDS (with preference for ATG start)
         if self.prefer_longest:
             longest_overall = self._find_longest_cds(transcripts)
             longest_atg = self._find_longest_atg_cds(transcripts)
@@ -209,8 +209,8 @@ class TranscriptSelector:
                     return TranscriptSelection(
                         transcript=longest,
                         method=SelectionMethod.LONGEST_CDS,
-                        confidence=0.75,  # Slightly lower confidence due to alternative choice
-                        rationale=f"Longest ATG-starting CDS ({longest.cds_length} bp), avoiding {start_codon} start",
+                        confidence=0.65,  # Lower confidence due to non-standard start codon issue
+                        rationale=f"Longest ATG-starting CDS ({longest.cds_length} bp), avoided {start_codon} start",
                         warnings=warnings,
                         alternatives_count=len(transcripts) - 1
                     )
@@ -237,41 +237,43 @@ class TranscriptSelector:
                     return TranscriptSelection(
                         transcript=longest,
                         method=SelectionMethod.MOST_RECENT_VERSION,
-                        confidence=0.7,
+                        confidence=0.60,  # Lower confidence for algorithmic tiebreaker
                         rationale=f"Most recent version among {len(same_length)} equal-length transcripts",
                         warnings=warnings,
                         alternatives_count=len(transcripts) - 1
                     )
                 
+                # Confidence based on whether it has standard start codon
+                confidence = 0.70 if self._has_standard_start_codon(longest) else 0.60
                 return TranscriptSelection(
                     transcript=longest,
                     method=SelectionMethod.LONGEST_CDS,
-                    confidence=0.8,
-                    rationale=f"Longest CDS ({longest.cds_length} bp)",
+                    confidence=confidence,
+                    rationale=f"Longest CDS ({longest.cds_length} bp) - algorithmic selection",
                     warnings=warnings,
                     alternatives_count=len(transcripts) - 1
                 )
         
-        # 5. Fall back to most recent version
+        # 6. Fall back to most recent version
         most_recent = self._find_most_recent(transcripts)
         if most_recent:
             warnings.append("No clear canonical transcript identified")
             return TranscriptSelection(
                 transcript=most_recent,
                 method=SelectionMethod.MOST_RECENT_VERSION,
-                confidence=0.6,
-                rationale="Most recent transcript version",
+                confidence=0.50,  # Low confidence for fallback method
+                rationale="Most recent transcript version - last resort algorithmic selection",
                 warnings=warnings,
                 alternatives_count=len(transcripts) - 1
             )
         
-        # 6. Last resort - take first
-        warnings.append("Using first available transcript")
+        # 7. Last resort - take first
+        warnings.append("Using first available transcript - manual review required")
         return TranscriptSelection(
             transcript=transcripts[0],
             method=SelectionMethod.DEFAULT,
-            confidence=0.5,
-            rationale="First available transcript (no selection criteria met)",
+            confidence=0.40,  # Very low confidence for arbitrary selection
+            rationale="First available transcript (no reliable selection criteria met)",
             warnings=warnings,
             alternatives_count=len(transcripts) - 1
         )
@@ -306,60 +308,30 @@ class TranscriptSelector:
     ) -> Optional[RetrievedSequence]:
         """Find UniProt canonical transcript.
         
-        Queries UniProt to get the canonical transcript accession.
+        For now, this is simplified to just use the longest transcript
+        as a placeholder since proper UniProt canonical detection requires
+        complex protein-to-mRNA mapping that often fails.
         """
-        try:
-            # Query UniProt for gene
-            params = {
-                'query': f'gene:{gene_symbol} AND organism_id:9606 AND reviewed:true',
-                'format': 'json',
-                'fields': 'xref_refseq',
-                'size': 1
-            }
-            
-            response = self.session.get(
-                f"{self.UNIPROT_BASE_URL}/search",
-                params=params,
-                timeout=10
-            )
-            response.raise_for_status()
-            
-            data = response.json()
-            results = data.get('results', [])
-            
-            if not results:
-                logger.debug(f"No UniProt entry found for {gene_symbol}")
-                return None
-            
-            # Extract RefSeq cross-references
-            entry = results[0]
-            refseq_refs = []
-            
-            for xref in entry.get('uniProtKBCrossReferences', []):
-                if xref.get('database') == 'RefSeq':
-                    ref_id = xref.get('id', '')
-                    if ref_id.startswith('NM_'):  # mRNA transcript
-                        refseq_refs.append(ref_id.split('.')[0])  # Remove version
-            
-            if not refseq_refs:
-                logger.debug(f"No RefSeq cross-references in UniProt for {gene_symbol}")
-                return None
-            
-            # Find matching transcript
-            # UniProt typically lists canonical first
-            canonical_accession = refseq_refs[0]
-            
-            for transcript in transcripts:
-                if transcript.accession == canonical_accession:
-                    logger.info(f"Matched UniProt canonical: {transcript.full_accession}")
-                    return transcript
-            
-            logger.debug(f"UniProt canonical {canonical_accession} not in transcript list")
+        # Simplified approach: assume longest transcript is canonical
+        # This is a reasonable heuristic since UniProt canonical detection
+        # is complex and error-prone due to protein->mRNA mapping issues
+        
+        if not transcripts:
             return None
             
-        except Exception as e:
-            logger.error(f"Failed to query UniProt for {gene_symbol}: {e}")
-            return None
+        # Find longest CDS that starts with ATG (most likely to be canonical)
+        atg_transcripts = [t for t in transcripts 
+                          if t.cds_sequence and t.cds_sequence.upper().startswith('ATG')]
+        
+        if atg_transcripts:
+            longest = max(atg_transcripts, key=lambda t: t.cds_length)
+            logger.info(f"Selected longest ATG transcript as UniProt canonical proxy: {longest.full_accession}")
+            return longest
+        
+        # Fall back to overall longest if no ATG transcripts
+        longest = max(transcripts, key=lambda t: t.cds_length)
+        logger.info(f"Selected longest transcript as UniProt canonical proxy: {longest.full_accession}")
+        return longest
     
     def _find_longest_cds(
         self,

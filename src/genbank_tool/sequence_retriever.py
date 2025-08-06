@@ -246,10 +246,17 @@ class SequenceRetriever:
         Returns:
             True if RefSeq Select
         """
-        # Check annotations and features for RefSeq Select designation
+        # Check keywords field (primary location for RefSeq Select designation)
+        if 'keywords' in record.annotations:
+            keywords = record.annotations['keywords']
+            for keyword in keywords:
+                if 'RefSeq Select' in keyword or 'MANE Select' in keyword:
+                    return True
+        
+        # Check comments for RefSeq Select designation
         if 'comment' in record.annotations:
             comment = record.annotations['comment'].upper()
-            if 'REFSEQ SELECT' in comment:
+            if 'REFSEQ SELECT' in comment or 'MANE SELECT' in comment:
                 return True
         
         # Check in feature qualifiers
@@ -257,7 +264,7 @@ class SequenceRetriever:
             if feature.type == "source":
                 notes = feature.qualifiers.get('note', [])
                 for note in notes:
-                    if 'RefSeq Select' in note:
+                    if 'RefSeq Select' in note or 'MANE Select' in note:
                         return True
         
         return False

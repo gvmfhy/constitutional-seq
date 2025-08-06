@@ -301,6 +301,32 @@ class GenBankToolGUI(QMainWindow):
         
         layout.addLayout(file_layout)
         
+        # Add prominent Process Genes button
+        self.process_button = QPushButton("🧬 Process Genes")
+        self.process_button.clicked.connect(self.process_genes)
+        self.process_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2E7D32;
+                color: white;
+                font-size: 16px;
+                font-weight: bold;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #388E3C;
+            }
+            QPushButton:pressed {
+                background-color: #1B5E20;
+            }
+            QPushButton:disabled {
+                background-color: #CCCCCC;
+                color: #666666;
+            }
+        """)
+        self.process_button.setToolTip("Process the genes listed above to retrieve their CDS sequences")
+        layout.addWidget(self.process_button)
+        
         # Gene count
         self.gene_count_label = QLabel("0 genes")
         layout.addWidget(self.gene_count_label)
@@ -627,6 +653,11 @@ class GenBankToolGUI(QMainWindow):
         
         genes = [g.strip() for g in text.split('\n') if g.strip()]
         
+        # Disable process button during processing
+        if hasattr(self, 'process_button'):
+            self.process_button.setEnabled(False)
+            self.process_button.setText("⏳ Processing...")
+        
         # Clear previous results
         self.clear_results()
         
@@ -722,6 +753,12 @@ class GenBankToolGUI(QMainWindow):
         """Handle processing completion."""
         self.process_action.setEnabled(True)
         self.stop_action.setEnabled(False)
+        
+        # Re-enable process button
+        if hasattr(self, 'process_button'):
+            self.process_button.setEnabled(True)
+            self.process_button.setText("🧬 Process Genes")
+        
         self.status_label.setText(f"Processing complete. {len(self.results)} successful results.")
         
         # Show summary

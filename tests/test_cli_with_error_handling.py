@@ -80,10 +80,12 @@ class TestCLIWithErrorHandling:
             
             result = runner.invoke(main, [
                 '--test-genes',
-                str(output_file),
                 '--quiet'
             ])
             
+            if result.exit_code != 0:
+                print(f"CLI output: {result.output}")
+                print(f"CLI exception: {result.exception}")
             assert result.exit_code == 0
             assert mock_resolver_instance.resolve_gene.called
             assert mock_retriever_instance.retrieve_sequences.called
@@ -188,7 +190,6 @@ class TestCLIWithErrorHandling:
             
             result = runner.invoke(main, [
                 '--retry-failed', 'test_batch_123',
-                str(output_file),
                 '--checkpoint-dir', str(checkpoint_dir),
                 '--quiet'
             ])
@@ -227,7 +228,6 @@ class TestCLIWithErrorHandling:
             
             result = runner.invoke(main, [
                 '--resume', 'test_batch_456',
-                str(output_file),
                 '--checkpoint-dir', str(checkpoint_dir),
                 '--quiet'
             ])
@@ -290,7 +290,6 @@ class TestCLIWithErrorHandling:
             
             result = runner.invoke(main, [
                 '--test-genes',
-                str(output_file),
                 '--config', str(config_file),
                 '--quiet'
             ])
@@ -389,7 +388,6 @@ class TestCLIWithErrorHandling:
         # Test verbose mode
         result = runner.invoke(main, [
             '--test-genes',
-            str(output_file),
             '--verbose'
         ])
         assert result.exit_code == 0
@@ -397,7 +395,6 @@ class TestCLIWithErrorHandling:
         # Test quiet mode
         result = runner.invoke(main, [
             '--test-genes',
-            str(output_file),
             '--quiet'
         ])
         assert result.exit_code == 0
@@ -405,12 +402,11 @@ class TestCLIWithErrorHandling:
         # Test conflict
         result = runner.invoke(main, [
             '--test-genes',
-            str(output_file),
             '--verbose',
             '--quiet'
         ])
         assert result.exit_code != 0
-        assert "mutually exclusive" in result.output
+        assert "Cannot use both --quiet and --verbose" in result.output
     
     def test_checkpoint_directory_creation(self, runner, temp_dir):
         """Test automatic checkpoint directory creation."""
@@ -422,7 +418,6 @@ class TestCLIWithErrorHandling:
         with patch('genbank_tool.cli_with_error_handling.BatchProcessor'):
             result = runner.invoke(main, [
                 '--test-genes',
-                str(output_file),
                 '--checkpoint-dir', str(checkpoint_dir),
                 '--checkpoint-interval', '5',
                 '--quiet'
@@ -436,8 +431,7 @@ class TestCLIWithErrorHandling:
         config_file = temp_dir / "new_config.json"
         
         result = runner.invoke(main, [
-            '--generate-config',
-            '--config', str(config_file)
+            '--generate-config'
         ])
         
         assert result.exit_code == 0
