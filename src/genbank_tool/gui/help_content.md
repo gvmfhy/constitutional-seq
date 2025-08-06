@@ -4,6 +4,55 @@
 
 This tool retrieves validated canonical coding sequences (CDS) for mRNA therapeutic development. Selecting the correct isoform is critical for therapeutic efficacy, safety, and regulatory approval.
 
+## 🔄 Complete Processing Pipeline
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║                    mRNA THERAPEUTIC CDS RETRIEVAL                    ║
+║                         Scientific Workflow                          ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ USER INPUT: Any gene name format                                    │
+│ Examples: "cd31", "P53", "Her2", "vegf", "IL-2"                    │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 1: HGNC GENE NAME RESOLUTION                                   │
+│ • Queries HUGO Gene Nomenclature Committee database                 │
+│ • Resolves ALL aliases to official symbol                           │
+│ • Returns: PECAM1, TP53, ERBB2, VEGFA, IL2                        │
+│ • Provides stable NCBI Gene ID for database queries                 │
+│ Scientific Basis: Eliminates nomenclature ambiguity                 │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 2: MANE DATABASE CHECK                                         │
+│ • Queries Matched Annotation (NCBI + EMBL-EBI consensus)           │
+│ • Checks ~19,000 genes for expert-selected transcript              │
+│ • Returns: e.g., NM_000546.6 for TP53                              │
+│ • Confidence: 1.0 (gold standard)                                   │
+│ Scientific Basis: International consensus on canonical transcript    │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│ STEP 3: GENBANK RETRIEVAL & SELECTION                              │
+│ • Fetches ALL transcript variants (10-50 per gene)                 │
+│ • Identifies MANE/RefSeq Select/best match                         │
+│ • Extracts CDS region (ATG → Stop codon)                           │
+│ • Validates reading frame and completeness                          │
+│ Scientific Basis: Ensures complete, functional coding sequence      │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│ OUTPUT: THERAPEUTIC-GRADE CDS                                       │
+│ • DNA sequence: ATGCCCAGCGGC...TGA                                 │
+│ • Confidence score: 0.40-1.00                                       │
+│ • Selection method documented                                       │
+│ • Ready for codon optimization → mRNA synthesis                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
 ## 🚀 Quick Start
 
 1. **Enter Gene Names:** Use ANY format - official symbols, common aliases, clinical names
@@ -30,6 +79,38 @@ This tool retrieves validated canonical coding sequences (CDS) for mRNA therapeu
 
 ## 🔬 The Complete Data Processing Pipeline
 
+```
+╔══════════════════════════════════════════════════════════════╗
+║              COMPLETE DATA FLOW (FINAL DESIGN)               ║
+╚══════════════════════════════════════════════════════════════╝
+
+USER INPUT: "cd31", "P53", "Her2", etc.
+            ↓
+┌──────────────────────────────────────────┐
+│ 1. HGNC RESOLVER (NEW)                   │
+│   - Handles any case                     │
+│   - Resolves aliases                     │
+│   - Returns: PECAM1, TP53, ERBB2        │
+│   - Provides NCBI Gene ID                │
+└──────────────────────────────────────────┘
+            ↓
+┌──────────────────────────────────────────┐
+│ 2. MANE DATABASE CHECK                   │
+│   - Is there MANE Select?                │
+│   - Returns: NM_000546.6                 │
+│   - Highest confidence                   │
+└──────────────────────────────────────────┘
+            ↓
+┌──────────────────────────────────────────┐
+│ 3. GENBANK RETRIEVAL                     │
+│   - Fetch all transcripts                │
+│   - Find MANE/best transcript            │
+│   - Extract CDS sequence                 │
+└──────────────────────────────────────────┘
+            ↓
+OUTPUT: Actual DNA sequence
+```
+
 ### Understanding the Challenge
 
 When developing mRNA therapeutics, you need the exact DNA sequence that will be synthesized as therapeutic mRNA. However, genes have multiple names (CD31 vs PECAM1), and each gene can produce multiple transcript variants (isoforms). Selecting the wrong variant could result in a non-functional or immunogenic therapeutic. This tool solves both problems systematically.
@@ -39,14 +120,26 @@ When developing mRNA therapeutics, you need the exact DNA sequence that will be 
 **What is HGNC?**
 The HUGO Gene Nomenclature Committee (HGNC) is the international authority responsible for approving unique symbols and names for human genes. Think of it as the "official registry" for human gene names, maintained by experts who ensure each gene has ONE official symbol.
 
+**Scientific Reasoning:**
+Gene nomenclature chaos is a major source of experimental errors. A single gene can have 10+ names in literature (e.g., CD31, PECAM-1, PECAM1, endoCAM, PECA1, GPIIA', CD31/EndoCAM). Without standardization, researchers risk:
+- Ordering wrong reagents
+- Missing critical literature
+- Developing therapeutics for wrong targets
+- Regulatory rejection due to nomenclature errors
+
 **Why HGNC Matters for Therapeutics:**
 - **Eliminates ambiguity:** The gene you know as "HER2" is officially "ERBB2". Without proper resolution, you might retrieve the wrong gene entirely.
 - **Handles historical names:** Many genes have been renamed as science evolved. P53 became TP53, but both names persist in literature.
 - **Resolves aliases:** CD31 is a widely-used name for PECAM1. HGNC knows all these relationships.
+- **Provides Gene ID:** Links to NCBI's stable numerical identifier (e.g., 5175 for PECAM1)
 
 **How It Works:**
 1. You enter: "CD31" (common alias)
-2. HGNC API checks official records
+2. HGNC API searches across:
+   - Current official symbols
+   - Previous symbols (historical)
+   - Alias symbols (alternative names)
+   - Name synonyms
 3. Returns: "PECAM1" (official symbol) + Gene ID 5175
 4. Now we know EXACTLY which gene you want
 
@@ -55,11 +148,26 @@ The HUGO Gene Nomenclature Committee (HGNC) is the international authority respo
 - HER2 → ERBB2 (erb-b2 receptor tyrosine kinase 2)
 - p53 → TP53 (tumor protein p53)
 - IL-2 → IL2 (interleukin 2)
+- VEGF → VEGFA (vascular endothelial growth factor A)
 
 ### Step 2: MANE Transcript Selection
 
 **What is MANE?**
 MANE (Matched Annotation from NCBI and EMBL-EBI) represents an unprecedented collaboration between the two largest genomic databases in the world - NCBI's RefSeq (USA) and EMBL-EBI's Ensembl (Europe). For years, these databases independently annotated human genes, often selecting different transcripts as "canonical." MANE resolves this by having experts from both organizations jointly agree on ONE transcript per gene.
+
+**Scientific Reasoning:**
+Transcript selection is NOT arbitrary. The wrong isoform can be:
+- **Non-functional:** Missing critical domains (e.g., kinase domain in receptors)
+- **Immunogenic:** Containing retained introns or nonsense-mediated decay signals
+- **Unstable:** Lacking proper UTR elements for mRNA stability
+- **Tissue-inappropriate:** Brain-specific isoform used for liver therapy
+
+MANE transcripts are selected based on:
+- Expression evidence (most abundant in most tissues)
+- Conservation across species
+- Protein functionality
+- Clinical relevance
+- Literature support
 
 **Why MANE is Critical for Therapeutics:**
 - **Consensus standard:** When NCBI and Ensembl agree, you can be confident this is THE transcript to use
@@ -68,14 +176,22 @@ MANE (Matched Annotation from NCBI and EMBL-EBI) represents an unprecedented col
 - **Reduced risk:** Using MANE transcripts minimizes the chance of selecting a rare or artifactual variant
 
 **The MANE Selection Process:**
-1. For gene "PECAM1", check MANE database
-2. Find: NM_000442.5 is the MANE Select transcript
-3. This means BOTH RefSeq and Ensembl agree this is the best
-4. Use this with highest confidence (score = 1.0)
+1. For gene "PECAM1", check MANE database (~19,338 genes)
+2. Database query returns:
+   - MANE Select: NM_000442.5 (RefSeq) = ENST00000563921.5 (Ensembl)
+   - Confidence: 1.0 (highest possible)
+3. This means BOTH RefSeq and Ensembl experts agree
+4. If MANE Select exists, STOP - use this transcript
+
+**MANE Plus Clinical:**
+Some genes have additional "MANE Plus Clinical" transcripts:
+- Used for specific disease contexts
+- Historically important in clinical testing
+- Confidence: 0.98 (slightly lower than Select)
 
 **MANE Coverage:**
 - Currently covers ~19,000 human protein-coding genes
-- Continuously updated as new genes are validated
+- ~95% of clinically relevant genes included
 - For genes without MANE, tool falls back to other selection methods
 
 ### Step 3: GenBank Sequence Retrieval
@@ -83,29 +199,100 @@ MANE (Matched Annotation from NCBI and EMBL-EBI) represents an unprecedented col
 **What is GenBank?**
 GenBank is NCBI's comprehensive database of all publicly available DNA sequences. It contains the actual ATGC nucleotide sequences for every transcript.
 
+**Scientific Reasoning:**
+GenBank records contain more than just sequences - they include:
+- **Feature annotations:** Exact CDS boundaries (start/stop positions)
+- **Quality indicators:** RefSeq status, validation level
+- **Cross-references:** Links to protein products, publications
+- **Version history:** Sequence updates and corrections
+
 **The Retrieval Process:**
-1. Using PECAM1's Gene ID (5175), query GenBank
-2. Retrieve ALL available transcripts (there might be 10-50 variants)
-3. Find the MANE Select transcript (NM_000442.5) in the list
-4. Extract its CDS (coding sequence) region
-5. Return: The exact DNA sequence starting with ATG and ending with a stop codon
+1. Using PECAM1's Gene ID (5175), construct query:
+   ```
+   5175[Gene ID] AND refseq[filter] AND mRNA[filter]
+   ```
+2. Retrieve ALL available transcripts:
+   - Typically 10-50 variants per gene
+   - Each with different lengths, exon usage, UTRs
+3. Parse each GenBank record to:
+   - Check for MANE/RefSeq Select keywords
+   - Extract CDS features
+   - Verify start/stop codons
+4. Match against MANE Select (NM_000442.5)
+5. Extract CDS region:
+   - Start: ATG (methionine)
+   - End: TAA/TAG/TGA (stop codon)
+   - Complete ORF validated
+
+**Quality Checks Performed:**
+- ✓ CDS length divisible by 3 (complete codons)
+- ✓ Starts with ATG (or noted alternative)
+- ✓ Ends with stop codon
+- ✓ No internal stops (verified via translation)
+- ✓ Matches expected protein length
 
 **What You Get:**
 - Actual DNA sequence: `ATGCCCAGCGGCAGCAGT...TGA`
-- Length: 2217 base pairs for PECAM1
+- Length: 2217 base pairs for PECAM1 (738 amino acids + stop)
 - Ready for codon optimization and mRNA synthesis
+- Confidence score based on selection method
 
-### Step 4: Fallback Strategies
+### Step 4: Fallback Selection Hierarchy
 
 **When MANE Isn't Available:**
-If a gene lacks MANE annotation, the tool uses a hierarchy of alternative selection methods:
+Not all genes have MANE annotation (~5% lack it). The tool implements a scientifically-grounded fallback hierarchy:
 
-1. **RefSeq Select:** NCBI's own curated choice
-2. **UniProt Canonical:** The protein database's selection
-3. **Longest CDS:** Among transcripts with ATG start codons
-4. **Most Recent Version:** Newest annotation as tiebreaker
+```
+┌─────────────────────────────────────────────────┐
+│         SELECTION HIERARCHY FLOWCHART           │
+├─────────────────────────────────────────────────┤
+│ 1. MANE Select? → Yes → Use (Confidence: 1.0)  │
+│    ↓ No                                         │
+│ 2. MANE Plus Clinical? → Yes → Use (0.98)      │
+│    ↓ No                                         │
+│ 3. RefSeq Select? → Yes → Use (0.95)           │
+│    ↓ No                                         │
+│ 4. UniProt Canonical? → Yes* → Use (0.75)      │
+│    ↓ No (*simplified to longest ATG)           │
+│ 5. Longest CDS with ATG? → Yes → Use (0.70)    │
+│    ↓ No                                         │
+│ 6. Most Recent Version → Use (0.50)            │
+│    ↓ If multiple same length                    │
+│ 7. First Available → Use (0.40) ⚠️              │
+└─────────────────────────────────────────────────┘
+```
 
-Each method has a confidence score reflecting its reliability.
+**Scientific Justification for Each Level:**
+
+1. **RefSeq Select (0.95):**
+   - Manually curated by NCBI scientists
+   - Reviewed for completeness and accuracy
+   - Often matches CCDS (Consensus CDS) project
+
+2. **UniProt Canonical Proxy (0.75):**
+   - Since protein→mRNA mapping is complex
+   - We use "longest ATG-starting transcript" as proxy
+   - Rationale: Longest often = most complete protein
+
+3. **Longest CDS (0.70):**
+   - Biological principle: Evolution preserves functional length
+   - Longer transcripts less likely to be truncated
+   - Must start with ATG for reliable translation
+
+4. **Non-ATG Handling (0.65):**
+   - If longest starts with CTG/GTG (alternative starts)
+   - Select longest ATG alternative instead
+   - Non-ATG starts complicate therapeutic production
+
+5. **Most Recent Version (0.50-0.60):**
+   - Last resort: newest annotation may have corrections
+   - Low confidence as this is arbitrary
+   - Requires manual validation
+
+6. **First Available (0.40):**
+   - Emergency fallback only
+   - Indicates algorithm failure
+   - REQUIRES immediate manual review
 
 ## 🧪 Scientific Background for Canonical Isoform Selection
 
@@ -129,17 +316,22 @@ This hierarchy reflects scientific reasoning but represents the author's interpr
 
 ## 📊 Transparent Confidence Scoring System
 
-| Score | Selection Method | Rationale | Action Required |
-|-------|------------------|-----------|-----------------|
-| 1.0 | MANE Select | NCBI/EMBL-EBI consensus transcript | Use directly |
-| 0.98 | MANE Plus Clinical | Additional clinically relevant transcript | Minimal validation |
-| 0.95 | RefSeq Select | NCBI manually curated representative | Check rationale |
-| 0.75 | UniProt Canonical (proxy) | Longest ATG transcript approximation | Validate approach |
-| 0.70 | Longest CDS (ATG) | Algorithmic: longest with ATG start | Review alternatives |
-| 0.65 | Longest CDS (non-ATG avoided) | Selected ATG alternative over longer non-ATG | Check biological relevance |
-| 0.60 | Most Recent / Equal length tie | Algorithmic tiebreaker method | Literature validation required |
-| 0.50 | Most Recent (fallback) | Last resort when no criteria met | Manual curation needed |
-| 0.40 | First Available | Arbitrary selection due to algorithm failure | Immediate manual review |
+| Score | Selection Method | Scientific Basis | Recommended Action |
+|-------|------------------|------------------|-------------------|
+| **1.00** | MANE Select | NCBI/EMBL-EBI expert consensus | ✅ Use directly for therapeutics |
+| **0.98** | MANE Plus Clinical | Clinically validated alternative | ✅ Use with minimal validation |
+| **0.95** | RefSeq Select | NCBI manual curation | ✅ Check selection rationale |
+| **0.75** | UniProt Canonical (proxy) | Longest ATG transcript heuristic | ⚠️ Validate biological relevance |
+| **0.70** | Longest CDS (ATG) | Size-based selection algorithm | ⚠️ Review alternative transcripts |
+| **0.65** | Longest CDS (non-ATG avoided) | ATG preference over length | ⚠️ Check domain completeness |
+| **0.60** | Most Recent / Equal length | Arbitrary tiebreaker | 🔍 Literature validation required |
+| **0.50** | Most Recent (fallback) | No biological criteria met | 🔍 Manual curation essential |
+| **0.40** | First Available | Algorithm failure | ❌ Do not use without review |
+
+**Color Coding in Results:**
+- 🟢 Green (≥0.90): High confidence - therapeutic grade
+- 🟡 Yellow (0.70-0.89): Medium confidence - validate selection
+- 🔴 Red (<0.70): Low confidence - manual review required
 
 ### Confidence Assessment: Automated Triage, Not Clinical Validation
 
