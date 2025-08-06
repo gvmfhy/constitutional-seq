@@ -335,10 +335,9 @@ class GenBankToolGUI(QMainWindow):
         self.results_tabs.addTab(self.results_table, "Results Table")
         
         # Sequence viewer
-        self.sequence_viewer = QTextBrowser()
+        self.sequence_viewer = QTextEdit()
         self.sequence_viewer.setReadOnly(True)
         self.sequence_viewer.setFont(QFont("Courier", 10))
-        self.sequence_viewer.setOpenExternalLinks(True)
         self.results_tabs.addTab(self.sequence_viewer, "Sequence Viewer")
         
         # Error log
