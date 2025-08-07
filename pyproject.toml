@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Austin P. Morrissey", email = "austin.morrissey@proton.me"},
+    {name = "Austin P. Morrissey"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",

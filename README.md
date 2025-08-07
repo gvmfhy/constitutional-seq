@@ -278,4 +278,4 @@ This is a demonstration of "vibe coding" - showing the untapped utility of compu
 
 I'm particularly interested in learning science from others and happy to collaborate on tasks. If you have something to teach and think it can be automated but don't know how, I'll help in exchange for you teaching me something from your domain.
 
-**Contact:** austin.morrissey@proton.me
+**Contact:** [Create an issue](https://github.com/gvmfhy/constitutional-seq/issues) for questions or feedback
