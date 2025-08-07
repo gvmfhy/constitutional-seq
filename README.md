@@ -1,5 +1,7 @@
 # Constitutional.seq
 
+*Named after Constitutional AI principles - just as Constitutional AI follows principled guidelines rather than arbitrary choices, Constitutional.seq follows a scientific hierarchy for transcript selection. Developed with Claude Opus, embodying the same constitutional approach to decision-making.*
+
 **Stop guessing which transcript variant to use for your mRNA therapeutics.**
 
 When you search for a gene like TP53 or VEGF in NCBI, you get 20+ transcript variants. Which one should you use for your therapeutic? Pick wrong and you'll target the wrong tissue, produce a non-functional protein, or trigger an immune response.
