@@ -177,25 +177,36 @@ Gene ID → Search RefSeq → Fetch GenBank Records → Extract CDS → Sequence
 ```
 1. User Preference (if specified)
      ↓ (if not found)
-2. RefSeq Select Designation
+2. MANE Select (NCBI-EMBL consensus)
      ↓ (if not found)
-3. UniProt Canonical Annotation
+3. MANE Plus Clinical
      ↓ (if not found)
-4. Longest CDS with ATG Start
+4. RefSeq Select Designation
+     ↓ (if not found)
+5. UniProt Canonical (via NP→NM mapping)
+     ↓ (if not found)
+6. Longest CDS with ATG Start
      ↓ (if tie)
-5. Most Recent Version Number
+7. Most Recent Version Number
 ```
 
 **Processing Logic:**
 
-1. **RefSeq Select Check**
+1. **MANE Select Check**
+   ```python
+   # Check MANE database for gold-standard transcript
+   if transcript_id in mane_select_transcripts:
+       return transcript  # Confidence: 1.0
+   ```
+
+2. **RefSeq Select Check**
    ```python
    # Check GenBank features for RefSeq-Select tag
    if "RefSeq-Select" in record.annotations:
        return transcript  # Confidence: 0.95
    ```
 
-2. **UniProt Cross-Reference**
+3. **UniProt Cross-Reference**
    ```python
    # Query UniProt for canonical transcript
    uniprot_response = query_uniprot(gene_symbol)
