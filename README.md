@@ -1,6 +1,6 @@
-# Constitutional.seq
+# Constitutional.seq: Speed up your mRNA production via autoamted design.
 
-*Named after Constitutional AI principles - just as Constitutional AI follows principled guidelines rather than arbitrary choices, Constitutional.seq follows a scientific hierarchy for transcript selection. Developed with Claude Opus, embodying the same constitutional approach to decision-making.*
+This project was vibe coded by Opus 4, and hence is named after Constitutional AI principles. Ideally, just as Claude follows principled guidelines rather than arbitrary choices, Constitutional.seq follows a scientific hierarchy for transcript selection. However,this is partly tongue and cheek, as the opus 4 series was classified under ASL-3 due to its potential to assist with risky topics like synthetic biology. Yet Opus 4 was fully capable of writing, refining, and even explaining a multi-step automation pipeline involving transcript selection, gene filtering, and sequence formatting without any jailbreaking or gaoding. 
 
 **Stop guessing which transcript variant to use for your mRNA therapeutics.**
 
