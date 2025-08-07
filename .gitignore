@@ -59,21 +59,45 @@ ENV/
 *.manifest
 *.spec
 
-# Project specific
+# Project specific cache and logs
+.genbank_cache/
+.genbank_checkpoints/
+.genbank_gui_logs/
+.genbank_logs/
+cache/
 output/
+data/
+
+# Test outputs (should not be in repo)
 *.tsv
+*.audit.json
 *.xlsx
 *.xls
-data/
-cache/
-.genbank_gui_logs/
-*.audit.json
+test_*.txt
 test_output*
+pax6_*.txt
+*_output.tsv
+*_output.audit.json
+BIMBAM.EXCEL.*
+genbank_results*
+
+# Task Master (project management)
 .taskmaster/
+
+# Ruff cache
+.ruff_cache/
+
+# Demo videos and media
 *.mov
 *.mp4
 *.gif
-
-# Demo videos
 constitutional_seq_demo.*
 demo.*
+
+# Cursor/Claude specific (local settings)
+.cursor/
+# Keep .claude/ for shared commands
+
+# Package files (not needed for Python project)
+package.json
+package-lock.json
