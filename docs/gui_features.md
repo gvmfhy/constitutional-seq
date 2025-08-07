@@ -1,8 +1,8 @@
-# GenBank Tool GUI Features
+# Constitutional.seq GUI Features
 
 ## Overview
 
-The GenBank Tool GUI provides a user-friendly interface for gene sequence retrieval, built with PyQt5 for a native desktop experience across Windows, macOS, and Linux.
+The Constitutional.seq GUI provides a user-friendly interface for canonical CDS sequence retrieval for mRNA therapeutics, built with PyQt5 for a native desktop experience across Windows, macOS, and Linux.
 
 ## Key Features
 

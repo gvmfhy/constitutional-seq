@@ -1,4 +1,4 @@
-# NCBI GenBank Tool - Visual Data Flow Diagram
+# Constitutional.seq - Visual Data Flow Diagram
 
 ## System Architecture Overview
 

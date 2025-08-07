@@ -1,6 +1,6 @@
 # Error Handling and Recovery
 
-The NCBI GenBank Tool includes comprehensive error handling and recovery mechanisms to ensure reliable operation even in the face of network issues, API rate limits, and other failures.
+Constitutional.seq includes comprehensive error handling and recovery mechanisms to ensure reliable operation even in the face of network issues, API rate limits, and other failures.
 
 ## Features
 
@@ -67,7 +67,7 @@ genbank-tool genes.txt output.tsv --log-dir ./my_logs
 ```
 
 Log files include:
-- `genbank_tool_YYYYMMDD.log`: General application logs
+- `constitutional_seq_YYYYMMDD.log`: General application logs
 - `errors_YYYYMMDD.log`: Error-specific logs with stack traces
 
 ### 5. Error Reporting

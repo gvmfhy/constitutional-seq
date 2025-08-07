@@ -1,6 +1,6 @@
-# GenBank Tool GUI Guide
+# Constitutional.seq GUI Guide
 
-The GenBank Tool now includes a modern graphical user interface built with PyQt5, providing an intuitive way to retrieve gene sequences without using the command line.
+Constitutional.seq includes a modern graphical user interface built with PyQt5, providing an intuitive way to retrieve canonical CDS sequences for mRNA therapeutics without using the command line.
 
 ## Launching the GUI
 

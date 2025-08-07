@@ -1,7 +1,7 @@
-# NCBI GenBank Tool - Comprehensive Data Flow Architecture
+# Constitutional.seq - Comprehensive Data Flow Architecture
 
 ## Overview
-The NCBI GenBank CDS Retrieval Tool is a sophisticated bioinformatics pipeline that retrieves Coding DNA Sequences (CDS) from NCBI GenBank for mRNA therapeutic development. This document provides a detailed analysis of how data flows through the system.
+Constitutional.seq is a sophisticated bioinformatics pipeline that retrieves canonical Coding DNA Sequences (CDS) from NCBI GenBank for mRNA therapeutic development. This document provides a detailed analysis of how data flows through the system, emphasizing the scientific rationale for transcript selection.
 
 ## 🔄 High-Level Data Flow
 
