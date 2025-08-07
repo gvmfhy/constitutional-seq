@@ -1,0 +1,35 @@
+{
+  "batch_id": "test_checkpoint",
+  "timestamp": 1754542236.063263,
+  "total_items": 11,
+  "processed_items": [
+    "BRCA1",
+    "TP53",
+    "BRCA2",
+    "EGFR",
+    "KRAS",
+    "VEGF",
+    "MYC",
+    "RB1",
+    "PTEN",
+    "APC"
+  ],
+  "failed_items": [],
+  "pending_items": [
+    "INTERRUPT_HERE"
+  ],
+  "results": {
+    "BRCA1": "processed_BRCA1",
+    "TP53": "processed_TP53",
+    "BRCA2": "processed_BRCA2",
+    "EGFR": "processed_EGFR",
+    "KRAS": "processed_KRAS",
+    "VEGF": "processed_VEGF",
+    "MYC": "processed_MYC",
+    "RB1": "processed_RB1",
+    "PTEN": "processed_PTEN",
+    "APC": "processed_APC"
+  },
+  "metadata": {},
+  "timestamp_readable": "2025-08-07T00:50:36.063263"
+}

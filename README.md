@@ -1,8 +1,12 @@
 # Constitutional.seq
 
-Principle-based canonical sequence retrieval for mRNA therapeutics. An AI-safety inspired approach to biological sequence selection.
+**Stop guessing which transcript variant to use for your mRNA therapeutics.**
 
-Automated tool for retrieving Coding DNA Sequences (CDS) from NCBI GenBank for mRNA therapeutic development workflows.
+When you search for a gene like TP53 or VEGF in NCBI, you get 20+ transcript variants. Which one should you use for your therapeutic? Pick wrong and you'll target the wrong tissue, produce a non-functional protein, or trigger an immune response.
+
+Constitutional.seq solves this by automatically selecting the canonical transcript using the same scientific hierarchy that clinical geneticists use: MANE Select (expert consensus) → RefSeq Select → UniProt Canonical → Longest CDS.
+
+**In short:** Give it a gene name, get back the one CDS sequence you should use, with a confidence score explaining why.
 
 ## Features
 
@@ -32,7 +36,7 @@ Automated tool for retrieving Coding DNA Sequences (CDS) from NCBI GenBank for m
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/constitutional-seq.git
+git clone https://github.com/gvmfhy/constitutional-seq.git
 cd constitutional-seq
 
 # Create virtual environment
