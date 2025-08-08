@@ -6,7 +6,7 @@ This project was vibe coded by Opus 4, and hence is named after Constitutional A
 
 When you search for a gene like TP53 or VEGF in NCBI, you get 20+ transcript variants. Which one should you use for your therapeutic? Pick wrong and you'll target the wrong tissue, produce a non-functional protein, or trigger an immune response.
 
-Constitutional.seq solves this by automatically selecting the canonical transcript using the same scientific hierarchy that clinical geneticists use: MANE Select (expert consensus) → RefSeq Select → UniProt Canonical → Longest CDS.
+Constitutional.seq solves this by automatically selecting the canonical transcript using the same scientific hierarchy that clinical geneticists use: MANE Select (expert consensus) → RefSeq Select → UniProt Canonical → (fall back heurisitic, longest CDS)
 
 **In short:** Give it a gene name, get back the one CDS sequence you should use, with a confidence score explaining why.
 
